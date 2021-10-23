@@ -20,4 +20,4 @@ jobs:
           local-dir: .
           server-dir: ${{ secrets.docs_target_dir }}
           security: strict
-          exclude: ["**/.git*", "**/.git*/**"]
+          exclude: "[**/.git*, **/.git*/**]"
