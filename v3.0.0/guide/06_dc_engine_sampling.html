@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discrete-Time: Sampling a DC-Engine &mdash; MoDyPy 3.0.0+0.gd993396.dirty documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Steady-State: A Water Tank" href="07_water_tank.html" />
+    <link rel="prev" title="Ports and Blocks: A DC-Motor with Propeller" href="05_dc_engine.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> MoDyPy
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../guide.html">User’s Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="01_integrator.html">Single States: A Simple Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_pendulum.html">Multiple States: A Pendulum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_planet_orbit.html">Multi-Dimensional States: A Planet Orbit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_bouncing_ball.html">Zero-Crossing Events: A Bouncing Ball</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_dc_engine.html">Ports and Blocks: A DC-Motor with Propeller</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Discrete-Time: Sampling a DC-Engine</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#defining-our-system">Defining our System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-simulation">Running the Simulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#working-with-clocks">Working with Clocks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="07_water_tank.html">Steady-State: A Water Tank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_linearization.html">Linearizing the Water Tank</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../guide.html">User’s Guide</a> &raquo;</li>
+      <li>Discrete-Time: Sampling a DC-Engine</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/06_dc_engine_sampling.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-time-sampling-a-dc-engine">
+<h1>Discrete-Time: Sampling a DC-Engine<a class="headerlink" href="#discrete-time-sampling-a-dc-engine" title="Permalink to this headline"></a></h1>
+<p>In the previous examples in this guide we only used continuous-time simulation.
+However, MoDyPy is also capable of modelling systems that mix continuous-
+and discrete-time elements.
+The discrete-time elements are modelled using clocks and states that do not have
+a derivative function, but which are instead updated as a reaction to events —
+either from a clock or from a zero-crossing event source.</p>
+<p>In the preceding example we modelled a DC-engine with a propeller.
+In this example, we will extend that system by sampling the generated thrust at
+regular time intervals, as shown in <a class="reference internal" href="#dc-engine-sampling-blocks"><span class="std std-numref">Fig. 16</span></a>.</p>
+<figure class="align-center" id="id1">
+<span id="dc-engine-sampling-blocks"></span><img alt="Block Diagram of DC-Engine with Zero-Order-Hold" src="../_images/06_dc_engine_sampling_blocks.svg" /><figcaption>
+<p><span class="caption-number">Fig. 16 </span><span class="caption-text">Block Diagram of DC-Engine with Zero-Order-Hold</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>At the end of this exercise you will know</p>
+<ul class="simple">
+<li><p>how to define clocks,</p></li>
+<li><p>how to introduce states for discrete-time systems, and</p></li>
+<li><p>how to update states when a clock tick occurs.</p></li>
+</ul>
+<p>For this, we will slightly modify the DC-engine example from the previous
+exercise.
+The DC-motor block and the propeller block are also provided as standard blocks,
+which we will use in this example.</p>
+<section id="defining-our-system">
+<h2>Defining our System<a class="headerlink" href="#defining-our-system" title="Permalink to this headline"></a></h2>
+<p>We again start by importing our required elements and defining the constants:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">modypy.model</span> <span class="kn">import</span> <span class="n">System</span><span class="p">,</span> <span class="n">State</span><span class="p">,</span> <span class="n">Block</span><span class="p">,</span> <span class="n">Clock</span>
+<span class="kn">from</span> <span class="nn">modypy.blocks.aerodyn</span> <span class="kn">import</span> <span class="n">Propeller</span>
+<span class="kn">from</span> <span class="nn">modypy.blocks.elmech</span> <span class="kn">import</span> <span class="n">DCMotor</span>
+<span class="kn">from</span> <span class="nn">modypy.blocks.sources</span> <span class="kn">import</span> <span class="n">constant</span>
+<span class="kn">from</span> <span class="nn">modypy.simulation</span> <span class="kn">import</span> <span class="n">Simulator</span>
+
+<span class="c1"># Motor Parameters</span>
+<span class="n">MOTOR_CONSTANT</span> <span class="o">=</span> <span class="mf">789.E-6</span>  <span class="c1"># V/(rad/s)</span>
+<span class="n">RESISTANCE</span> <span class="o">=</span> <span class="mf">43.3E-3</span>  <span class="c1"># Ohm</span>
+<span class="n">INDUCTANCE</span> <span class="o">=</span> <span class="mf">1.9E-3</span>  <span class="c1"># H</span>
+<span class="n">MOMENT_OF_INERTIA</span> <span class="o">=</span> <span class="mf">5.284E-6</span>  <span class="c1"># kg m^2</span>
+
+<span class="c1"># Propeller Parameters</span>
+<span class="n">DIAMETER</span> <span class="o">=</span> <span class="mi">8</span><span class="o">*</span><span class="mf">25.4E-3</span>  <span class="c1"># m</span>
+<span class="n">THRUST_COEFFICIENT</span> <span class="o">=</span> <span class="mf">0.09</span>
+<span class="n">POWER_COEFFICIENT</span> <span class="o">=</span> <span class="mf">0.04</span>
+</pre></div>
+</div>
+<p>We will re-use the <code class="docutils literal notranslate"><span class="pre">Engine</span></code> class as well as the system definition from the
+previous exercise:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Engine</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+
+<span class="n">system</span> <span class="o">=</span> <span class="n">System</span><span class="p">()</span>
+<span class="n">engine</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+                <span class="n">motor_constant</span><span class="o">=</span><span class="n">MOTOR_CONSTANT</span><span class="p">,</span>
+                <span class="n">resistance</span><span class="o">=</span><span class="n">RESISTANCE</span><span class="p">,</span>
+                <span class="n">inductance</span><span class="o">=</span><span class="n">INDUCTANCE</span><span class="p">,</span>
+                <span class="n">moment_of_inertia</span><span class="o">=</span><span class="n">MOMENT_OF_INERTIA</span><span class="p">,</span>
+                <span class="n">thrust_coefficient</span><span class="o">=</span><span class="n">THRUST_COEFFICIENT</span><span class="p">,</span>
+                <span class="n">power_coefficient</span><span class="o">=</span><span class="n">POWER_COEFFICIENT</span><span class="p">,</span>
+                <span class="n">diameter</span><span class="o">=</span><span class="n">DIAMETER</span><span class="p">)</span>
+
+<span class="c1"># Provide constant signals for the voltage and the air density</span>
+<span class="n">voltage</span> <span class="o">=</span> <span class="n">constant</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">3.5</span><span class="p">)</span>
+<span class="n">density</span> <span class="o">=</span> <span class="n">constant</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">1.29</span><span class="p">)</span>
+
+<span class="c1"># Connect them to the corresponding inputs of the engine</span>
+<span class="n">engine</span><span class="o">.</span><span class="n">voltage</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">voltage</span><span class="p">)</span>
+<span class="n">engine</span><span class="o">.</span><span class="n">density</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">density</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now, we define a state for keeping the last sampled value of the thrust signal:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sample_state</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note how we did not specify a derivative function for this state.
+Internally, this is modelled as the derivative function being a constant zero,
+i.e., the state does not change over time.</p>
+<p>However, we want our state to change, but we want it to change at specific,
+periodic events.
+For this, we first declare a clock, that will deliver such a stream of periodic
+events:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sample_clock</span> <span class="o">=</span> <span class="n">Clock</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, we define a function that updates our sampling state from the
+sampled signal, and we register that function as an event handler on the clock:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">update_sample</span><span class="p">(</span><span class="n">system_state</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Update the state of the sampler&quot;&quot;&quot;</span>
+    <span class="n">sample_state</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">system_state</span><span class="p">,</span> <span class="n">engine</span><span class="o">.</span><span class="n">thrust</span><span class="p">(</span><span class="n">system_state</span><span class="p">))</span>
+
+
+<span class="n">sample_clock</span><span class="o">.</span><span class="n">register_listener</span><span class="p">(</span><span class="n">update_sample</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="running-the-simulation">
+<h2>Running the Simulation<a class="headerlink" href="#running-the-simulation" title="Permalink to this headline"></a></h2>
+<p>Our system is now fully defined.
+Now we want to run a simulation of it and plot the results:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the simulator and run it</span>
+<span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">start_time</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">SimulationResult</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">simulator</span><span class="o">.</span><span class="n">run_until</span><span class="p">(</span><span class="n">time_boundary</span><span class="o">=</span><span class="mf">0.5</span><span class="p">))</span>
+
+<span class="c1"># Plot the result</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">engine</span><span class="o">.</span><span class="n">thrust</span><span class="p">(</span><span class="n">result</span><span class="p">),</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Continuous-Time&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">sample_state</span><span class="p">(</span><span class="n">result</span><span class="p">),</span> <span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Sampled&quot;</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s2">&quot;post&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Engine with DC-Motor and Static Propeller&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Thrust&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;06_dc_engine_sampling.png&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The result is shown in <a class="reference internal" href="#dc-engine-sampling"><span class="std std-numref">Fig. 17</span></a>.</p>
+<figure class="align-center" id="id2">
+<span id="dc-engine-sampling"></span><img alt="DC-Engine simulation with discrete-time sampling" src="../_images/06_dc_engine_sampling.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 17 </span><span class="caption-text">DC-Engine simulation with discrete-time sampling</span><a class="headerlink" href="#id2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>Note that this time we did not specify the <cite>max_step</cite> parameter.
+The simulator takes care that intermediate samples are available on every tick
+of every clock in our system.</p>
+<p>Of course, we could add the <cite>max_step</cite> parameter anyway, for example, if we were
+not only interested in the behaviour of the system at the clock ticks, but also
+in between.
+However, for simulation of a discrete-time control system, we might be satisfied
+with simulating the system accurately at the sampling points implied by the
+sampling clock.</p>
+</section>
+<section id="working-with-clocks">
+<h2>Working with Clocks<a class="headerlink" href="#working-with-clocks" title="Permalink to this headline"></a></h2>
+<p>There are many possibilities for defining clocks.
+Multiple clocks may have different periods, or they may have the same period but
+be offset against each other, they may only run until a specific point in time
+and then stop.
+Have a look at <a class="reference internal" href="../api/packages/model/events.html#modypy.model.events.Clock" title="modypy.model.events.Clock"><code class="xref py py-class docutils literal notranslate"><span class="pre">modypy.model.events.Clock</span></code></a> to find out about all the
+possibilities.</p>
+<p>Also, the quicker way of introducing a so-called <a class="reference external" href="https://en.wikipedia.org/wiki/Zero-order_hold">zero-order hold</a> element as we did here is
+using the <a class="reference internal" href="../api/packages/blocks/discrete.html#modypy.blocks.discrete.zero_order_hold" title="modypy.blocks.discrete.zero_order_hold"><code class="xref py py-func docutils literal notranslate"><span class="pre">modypy.blocks.discrete.zero_order_hold()</span></code></a> function.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="05_dc_engine.html" class="btn btn-neutral float-left" title="Ports and Blocks: A DC-Motor with Propeller" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="07_water_tank.html" class="btn btn-neutral float-right" title="Steady-State: A Water Tank" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Single States: A Simple Integrator &mdash; MoDyPy 2.0.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Multiple States: A Pendulum" href="02_pendulum.html" />
+    <link rel="prev" title="Programmer’s Guide" href="../guide.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> MoDyPy
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../guide.html">Programmer’s Guide</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Single States: A Simple Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_pendulum.html">Multiple States: A Pendulum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_planet_orbit.html">Multi-Dimensional States: A Planet Orbit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_bouncing_ball.html">Zero-Crossing Events: A Bouncing Ball</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_dc_engine.html">Ports and Blocks: A DC-Motor with Propeller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_dc_engine_sampling.html">Discrete-Time: Sampling a DC-Engine</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_water_tank.html">Steady-State: A Water Tank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_linearization.html">Linearizing the Water Tank</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../guide.html">Programmer’s Guide</a> &raquo;</li>
+      <li>Single States: A Simple Integrator</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/01_integrator.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="single-states-a-simple-integrator">
+<h1>Single States: A Simple Integrator<a class="headerlink" href="#single-states-a-simple-integrator" title="Permalink to this headline"></a></h1>
+<p>As our first model, we will describe a simple integrator with a sine wave input.
+As output we should also get a sine wave, just shifted in phase. After this
+exercise, you will know</p>
+<ul class="simple">
+<li><p>how to create a system,</p></li>
+<li><p>how to add signals and states to it,</p></li>
+<li><p>how to run a simulation of the system, and</p></li>
+<li><p>how to access simulation results.</p></li>
+</ul>
+<p>An integrator is a very simple dynamic element with a single state
+<span class="math notranslate nohighlight">\(x\left(t\right)\)</span>. The derivative <span class="math notranslate nohighlight">\(\frac{d}{dt} x\left(t\right)\)</span> of
+that state is just the input into the system. In addition to the derivative, we
+need to specify the initial value of the state <span class="math notranslate nohighlight">\(x\left(t_0\right)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}x\left(t_0\right) &amp;= x_0 \\
+\frac{d}{dt} x\left(t\right) &amp;= u\left(t\right)\end{split}\]</div>
+<p>To view our results, we will use <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code>, so we install that first:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ pip install matplotlib
+</pre></div>
+</div>
+<p>Now let us code our model. We start by importing the relevant declarations:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">modypy.model</span> <span class="kn">import</span> <span class="n">System</span><span class="p">,</span> <span class="n">State</span><span class="p">,</span> <span class="n">Signal</span>
+<span class="kn">from</span> <span class="nn">modypy.simulation</span> <span class="kn">import</span> <span class="n">Simulator</span>
+</pre></div>
+</div>
+<p>All models in <code class="docutils literal notranslate"><span class="pre">modypy</span></code> are contained in a
+<a class="reference internal" href="../api/packages/model/system.html#modypy.model.system.System" title="modypy.model.system.System"><code class="xref py py-class docutils literal notranslate"><span class="pre">System</span></code></a>, so we need to create an instance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">system</span> <span class="o">=</span> <span class="n">System</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Now we can add states, signals and other elements to that system. Let us first
+define a function that will calculate the value of our input and create a signal
+out of it:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">sine_input</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+
+<span class="n">input_signal</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+                      <span class="n">shape</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                      <span class="n">value</span><span class="o">=</span><span class="n">sine_input</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We add the <a class="reference internal" href="../api/packages/model/ports.html#modypy.model.ports.Signal" title="modypy.model.ports.Signal"><code class="xref py py-class docutils literal notranslate"><span class="pre">signal</span></code></a> to <code class="docutils literal notranslate"><span class="pre">system</span></code> by
+specifying that as the <em>owner</em> of the signal. Our signal is a scalar, which is
+why we specify a <code class="docutils literal notranslate"><span class="pre">shape</span></code> of <code class="docutils literal notranslate"><span class="pre">1</span></code>. The value is determined by the
+<code class="docutils literal notranslate"><span class="pre">sine_input</span></code> function.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">sine_input</span></code> function is passed a
+<a class="reference internal" href="../api/packages/model/evaluation.html#modypy.model.evaluation.DataProvider" title="modypy.model.evaluation.DataProvider"><code class="xref py py-class docutils literal notranslate"><span class="pre">structure</span></code></a> with a property <code class="docutils literal notranslate"><span class="pre">time</span></code>
+that is set to the current time. We use that to make our input signal change
+with time.</p>
+<p>Now we need to create the integrator. For that we first provide a function that
+calculates the value of the derivative of our state. That function simply
+returns the value of our input signal:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">integrator_dt</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">signals</span><span class="p">[</span><span class="n">input_signal</span><span class="p">]</span>
+
+<span class="n">integrator_state</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+                         <span class="n">shape</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                         <span class="n">derivative_function</span><span class="o">=</span><span class="n">integrator_dt</span><span class="p">,</span>
+                         <span class="n">initial_condition</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here, we see another feature of the
+<a class="reference internal" href="../api/packages/model/evaluation.html#modypy.model.evaluation.DataProvider" title="modypy.model.evaluation.DataProvider"><code class="xref py py-class docutils literal notranslate"><span class="pre">structure</span></code></a> passed to evaluation
+functions in <code class="docutils literal notranslate"><span class="pre">modypy</span></code>: The <code class="docutils literal notranslate"><span class="pre">signals</span></code> property holds a dictionary that can
+be accessed using the signal objects and will provide the current value of that
+signal.</p>
+<p>The state itself also is a scalar, so it has the same shape as our signal. Note
+that signals and states by default are scalar, so you could as well remove the
+<code class="docutils literal notranslate"><span class="pre">shape</span></code> parameter.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">initial_condition</span></code> specifies the initial value of the state. This is the
+value the state has when the simulation starts. We set it to <code class="docutils literal notranslate"><span class="pre">-1</span></code> so that we
+get a nice cosine-wave.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">derivative_function</span></code> is the function that gives our time derivative of
+our state. In our case, this is simply the current value of our input signal.</p>
+<p>Now, our system is already complete. We have our signal source and our integrator
+state. Let’s have a look at the motion of our system. For that, we create a
+<a class="reference internal" href="../api/packages/simulation.html#modypy.simulation.Simulator" title="modypy.simulation.Simulator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Simulator</span></code></a>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+                      <span class="n">start_time</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We set the start time for the simulation to <code class="docutils literal notranslate"><span class="pre">0</span></code>. To run the simulation, we
+have to call <code class="docutils literal notranslate"><span class="pre">run_until</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">msg</span> <span class="o">=</span> <span class="n">simulator</span><span class="o">.</span><span class="n">run_until</span><span class="p">(</span><span class="n">time_boundary</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">time_boundary</span></code> parameter gives the time until that the simulation should
+be run. In our case, we want the simulation to run for ten time-units. You can
+think of this as minutes, but if your system is expressed in the proper units,
+these can also be hours, days, years, or whatever you need to use.</p>
+<p>The result value of the <code class="docutils literal notranslate"><span class="pre">run_until</span></code> method is <code class="docutils literal notranslate"><span class="pre">None</span></code> when the simulation was
+successful and any other value if it failed. In that case, the result value gives
+some indication as to the reason for the failure.</p>
+<p>We check it and in case of failure print the reason. Otherwise, we want to plot
+the input and the integrator state:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Simulation failed with message &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">msg</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="c1"># Plot the result</span>
+    <span class="n">input_line</span><span class="p">,</span> <span class="n">integrator_line</span> <span class="o">=</span> \
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simulator</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                 <span class="n">simulator</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">signals</span><span class="p">[:,</span> <span class="n">input_signal</span><span class="o">.</span><span class="n">signal_slice</span><span class="p">],</span>
+                 <span class="s1">&#39;r&#39;</span><span class="p">,</span>
+                 <span class="n">simulator</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                 <span class="n">simulator</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">state</span><span class="p">[:,</span> <span class="n">integrator_state</span><span class="o">.</span><span class="n">state_slice</span><span class="p">],</span>
+                 <span class="s1">&#39;g&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">((</span><span class="n">input_line</span><span class="p">,</span> <span class="n">integrator_line</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Input&#39;</span><span class="p">,</span> <span class="s1">&#39;Integrator State&#39;</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;01_integrator_simulation.png&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The result of that simulation can be seen in <a class="reference internal" href="#integrator-simulation"><span class="std std-numref">Fig. 2</span></a>.</p>
+<figure class="align-center" id="id1">
+<span id="integrator-simulation"></span><img alt="Results of integrator simulation" src="../_images/01_integrator_simulation.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 2 </span><span class="caption-text">Results of integrator simulation: Input and integrator state</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>In red, we see the input signal, while the value of our integrator state is
+plotted in green. Looks quite correct.</p>
+<p>But what happened here? We accessed the <code class="docutils literal notranslate"><span class="pre">result</span></code> property of our simulator.
+This is an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">SimulatorResult</span></code>
+and provides access to the values of our signals and states in the <code class="docutils literal notranslate"><span class="pre">signals</span></code>
+and <code class="docutils literal notranslate"><span class="pre">state</span></code> property.</p>
+<p>These are represented as two-dimensional vectors, with the first dimension
+representing the sample index, and the second dimension representing the state
+or signal index. The sampling timestamp for each of the samples can be found in
+the <code class="docutils literal notranslate"><span class="pre">time</span></code> property, which is a one-dimensional array with the index being the
+sample-index.</p>
+<p>Upon creation, each signal and state is assigned a range of consecutive state or
+signal indices. The number of these indices for each state or signal depend on
+the shape of the signal or state. A scalar signal/state will be assigned a single
+index, but a state that is a 3x3 matrix will be assigned 9 indices.</p>
+<p>The slice of indices assigned to a signal can be retrieved by using the
+<code class="docutils literal notranslate"><span class="pre">signal_slice</span></code> method. Similarly, we can get the slice of state indices for a
+state by using <code class="docutils literal notranslate"><span class="pre">state_slice</span></code>.</p>
+<p>In the example above, we plot both the input signal and the integrator state
+against time. If we wanted, we could do other things with these results, such
+as checking the performance of a controller we built against control performance
+constraints and many other things.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../guide.html" class="btn btn-neutral float-left" title="Programmer’s Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="02_pendulum.html" class="btn btn-neutral float-right" title="Multiple States: A Pendulum" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modpy.model.events: Events &mdash; MoDyPy 3.0.0+0.gd993396.dirty documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="modpy.model.ports: Ports and Signals" href="ports.html" />
+    <link rel="prev" title="The Model API" href="../../model.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> MoDyPy
+            <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide.html">User’s Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../model.html">The Model API</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">modpy.model.events</span></code>: Events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ports.html"><code class="docutils literal notranslate"><span class="pre">modpy.model.ports</span></code>: Ports and Signals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="states.html"><code class="docutils literal notranslate"><span class="pre">modpy.model.states</span></code>: States and State-Signals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="system.html"><code class="docutils literal notranslate"><span class="pre">modpy.model.system</span></code>: Systems and Blocks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../blocks.html">The Blocks Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../simulation.html">Simulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../steady_state.html">Steady-State Determination</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../linearization.html">Linearization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../utils.html">The Utilities Module</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../api.html">API Documentation</a> &raquo;</li>
+          <li><a href="../../model.html">The Model API</a> &raquo;</li>
+      <li><code class="docutils literal notranslate"><span class="pre">modpy.model.events</span></code>: Events</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/api/packages/model/events.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-modypy.model.events">
+<span id="modpy-model-events-events"></span><h1><code class="docutils literal notranslate"><span class="pre">modpy.model.events</span></code>: Events<a class="headerlink" href="#module-modypy.model.events" title="Permalink to this headline"></a></h1>
+<p>Events are instances in time when some specific condition about the system
+changes. For example, clocks split the domain of the time variable into a
+possibly infinite sequence of continuous and disjoint intervals, each as long
+as a period of the clock. Whenever the continuous time variable leaves one of
+these intervals - and thereby enters the succeeding interval - a clock tick
+occurs.</p>
+<p>Similarly, zero-crossing events occur when the sign of a specific event function
+changes. That event function may depend on the time and on the value of signals
+and states.</p>
+<p>Listeners are special functions that may change the value of states in the
+system. They may be bound to events, meaning that they are executed whenever the
+respective event occurs. Note that any listener may be bound to multiple events.</p>
+<p>As each event may have multiple listeners bound to it, each occurrence of an
+event may lead to multiple listeners being executed. Similarly, multiple events
+may occur at any point in time, also possibly leading to multiple listeners
+being executed.</p>
+<p>The order of execution of listeners in this situation is undefined. Thus,
+model developers should make sure that listeners acting on the same parts of the
+state are confluent, i.e., that the final states resulting from different orders
+of execution of listeners are equivalent to each other. What is considered
+<cite>equivalent</cite> may depend on the application.</p>
+<p>Further, listeners may change the state in such a way that the sign of the
+event function of a zero-crossing event changes. Thus, one event may lead to the
+occurrence of another, and it is possible that a single event results in an
+endless event loop. Thus, event listeners need to be expressed carefully so that
+they do not trigger any unwanted events.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="modypy.model.events.AbstractEventSource">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.model.events.</span></span><span class="sig-name descname"><span class="pre">AbstractEventSource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/events.html#AbstractEventSource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.AbstractEventSource" title="Permalink to this definition"></a></dt>
+<dd><p>An event source defines the circumstances under which an event occurs.
+Events are occurrences of special occurrence that may require a reaction.</p>
+<p>Events can be reacted upon by updating the state of the system. For this
+purpose, event listeners can be registered which are called upon occurrence
+of the event.</p>
+<p><code class="docutils literal notranslate"><span class="pre">AbstractEventSource</span></code> is the abstract base class for all event sources.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="modypy.model.events.AbstractEventSource.source">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">source</span></span><a class="headerlink" href="#modypy.model.events.AbstractEventSource.source" title="Permalink to this definition"></a></dt>
+<dd><p>An event source always has itself as source</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="modypy.model.events.Clock">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.model.events.</span></span><span class="sig-name descname"><span class="pre">Clock</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_before_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/events.html#Clock"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.Clock" title="Permalink to this definition"></a></dt>
+<dd><p>A clock is an event source that generates a periodic event.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="modypy.model.events.Clock.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_before_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/events.html#Clock.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.Clock.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Construct a clock.</p>
+<p>The clock generates a periodic tick occurring at multiples of
+<code class="docutils literal notranslate"><span class="pre">period</span></code> offset by <code class="docutils literal notranslate"><span class="pre">start_time</span></code>. If <code class="docutils literal notranslate"><span class="pre">end_time</span></code> is set to
+a value other than <code class="docutils literal notranslate"><span class="pre">None</span></code>, no ticks will be generated after
+<code class="docutils literal notranslate"><span class="pre">end_time</span></code>. If <code class="docutils literal notranslate"><span class="pre">run_before_start</span></code> is set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the
+clock will also generate ticks before the time defined by
+<code class="docutils literal notranslate"><span class="pre">start_time</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>owner</strong> – The owner object of this clock (a system or a block)</p></li>
+<li><p><strong>period</strong> – The period of the clock</p></li>
+<li><p><strong>start_time</strong> – The start time of the clock (default: 0)</p></li>
+<li><p><strong>end_time</strong> – The end time of the clock (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p></li>
+<li><p><strong>run_before_start</strong> – Flag indicating whether the clock shall already
+run before the start time (default: <code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modypy.model.events.Clock.tick_generator">
+<span class="sig-name descname"><span class="pre">tick_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">not_before</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/events.html#Clock.tick_generator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.Clock.tick_generator" title="Permalink to this definition"></a></dt>
+<dd><p>Return a generate that will yield the times of the ticks of
+this clock.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>not_before</strong> – The ticks shown shall not be before the given time</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A generator for ticks</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="modypy.model.events.ClockQueue">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.model.events.</span></span><span class="sig-name descname"><span class="pre">ClockQueue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clocks</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/events.html#ClockQueue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.ClockQueue" title="Permalink to this definition"></a></dt>
+<dd><p>Queue of clock events</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="modypy.model.events.ClockQueue.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clocks</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/events.html#ClockQueue.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.ClockQueue.__init__" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="modypy.model.events.ClockQueue.next_clock_tick">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">next_clock_tick</span></span><a class="headerlink" href="#modypy.model.events.ClockQueue.next_clock_tick" title="Permalink to this definition"></a></dt>
+<dd><p>The time at which the next clock tick will occur or <cite>None</cite> if there
+are no further clock ticks</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modypy.model.events.ClockQueue.tick">
+<span class="sig-name descname"><span class="pre">tick</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/events.html#ClockQueue.tick"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.ClockQueue.tick" title="Permalink to this definition"></a></dt>
+<dd><p>Advance all the clocks until the current time</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="modypy.model.events.EventPort">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.model.events.</span></span><span class="sig-name descname"><span class="pre">EventPort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/events.html#EventPort"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.EventPort" title="Permalink to this definition"></a></dt>
+<dd><p>An event port is a port that can be connected to other event ports.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="modypy.model.events.EventPort.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/events.html#EventPort.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.EventPort.__init__" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modypy.model.events.EventPort.connect">
+<span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/events.html#EventPort.connect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.EventPort.connect" title="Permalink to this definition"></a></dt>
+<dd><p>Connect an event port to another event port.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> – The other event port</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference internal" href="#modypy.model.events.MultipleEventSourcesError" title="modypy.model.events.MultipleEventSourcesError"><strong>MultipleEventSourcesError</strong></a> – raised when two ports that are already
+    connected to two different sources shall be connected to each
+    other</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="modypy.model.events.EventPort.listeners">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">listeners</span></span><a class="headerlink" href="#modypy.model.events.EventPort.listeners" title="Permalink to this definition"></a></dt>
+<dd><p>The listeners registered on this event port</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="modypy.model.events.EventPort.reference">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">reference</span></span><a class="headerlink" href="#modypy.model.events.EventPort.reference" title="Permalink to this definition"></a></dt>
+<dd><p>The event port that is referenced by connection to this event
+port.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modypy.model.events.EventPort.register_listener">
+<span class="sig-name descname"><span class="pre">register_listener</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">listener</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/events.html#EventPort.register_listener"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.EventPort.register_listener" title="Permalink to this definition"></a></dt>
+<dd><p>Register a listener for this event port.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>listener</strong> – The listener to register</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="modypy.model.events.EventPort.source">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">source</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#modypy.model.events.EventPort" title="modypy.model.events.EventPort"><span class="pre">modypy.model.events.EventPort</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#modypy.model.events.EventPort.source" title="Permalink to this definition"></a></dt>
+<dd><p>The event source this port is connected to or <code class="docutils literal notranslate"><span class="pre">None</span></code> if it is
+not connected to any event source</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="modypy.model.events.MultipleEventSourcesError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.model.events.</span></span><span class="sig-name descname"><span class="pre">MultipleEventSourcesError</span></span><a class="reference internal" href="../../../_modules/modypy/model/events.html#MultipleEventSourcesError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.MultipleEventSourcesError" title="Permalink to this definition"></a></dt>
+<dd><p>An exception raised when two ports connected to different clocks
+shall be connected to each other.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="modypy.model.events.ZeroCrossEventSource">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.model.events.</span></span><span class="sig-name descname"><span class="pre">ZeroCrossEventSource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/events.html#ZeroCrossEventSource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.ZeroCrossEventSource" title="Permalink to this definition"></a></dt>
+<dd><p>A <code class="docutils literal notranslate"><span class="pre">ZeroCrossEventSource</span></code> defines an event source by the change of sign
+of a special event function. Such zero-cross events are specifically
+monitored and the values of event functions are recorded by the simulator.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="modypy.model.events.ZeroCrossEventSource.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/events.html#ZeroCrossEventSource.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.events.ZeroCrossEventSource.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Create a new zero-crossing event-source.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>owner</strong> – The system or block this event belongs to</p></li>
+<li><p><strong>event_function</strong> – The callable used to calculate the value of the
+event function</p></li>
+<li><p><strong>direction</strong> – <p>The direction of the sign change to consider
+Possible values:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">1</span></code></dt><dd><p>Consider only changes from negative to positive</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">-1</span></code></dt><dd><p>Consider only changes from positive to negative</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">0</span></code> (default)</dt><dd><p>Consider all changes</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>tolerance</strong> – The tolerance around zero
+Values with an absolute value less than or equal to
+<code class="docutils literal notranslate"><span class="pre">tolerance</span></code> are considered to be zero</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../../model.html" class="btn btn-neutral float-left" title="The Model API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ports.html" class="btn btn-neutral float-right" title="modpy.model.ports: Ports and Signals" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

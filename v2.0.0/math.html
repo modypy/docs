@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mathematical Basics &mdash; MoDyPy 2.0.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Programmer’s Guide" href="guide.html" />
+    <link rel="prev" title="MoDyPy" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> MoDyPy
+            <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Mathematical Basics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#continuous-time-systems">Continuous-time Systems</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#discrete-time-systems">Discrete-Time Systems</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#system-properties">System Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#linear-time-invariant-systems">Linear Time-Invariant Systems</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guide.html">Programmer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Mathematical Basics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/math.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mathematical-basics">
+<h1><a class="toc-backref" href="#id1">Mathematical Basics</a><a class="headerlink" href="#mathematical-basics" title="Permalink to this headline"></a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#mathematical-basics" id="id1">Mathematical Basics</a></p>
+<ul>
+<li><p><a class="reference internal" href="#continuous-time-systems" id="id2">Continuous-time Systems</a></p></li>
+<li><p><a class="reference internal" href="#discrete-time-systems" id="id3">Discrete-Time Systems</a></p></li>
+<li><p><a class="reference internal" href="#system-properties" id="id4">System Properties</a></p></li>
+<li><p><a class="reference internal" href="#linear-time-invariant-systems" id="id5">Linear Time-Invariant Systems</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<p><a class="reference external" href="https://en.wikipedia.org/wiki/Dynamical_system">Dynamical systems</a> are systems
+which evolve over time. In general, such a system has a set of inputs and outputs,
+both of which may change over time. In contrast, for a static system its output
+<span class="math notranslate nohighlight">\(\vec{y}\left(t\right)\)</span> only depends on the value of the input
+<span class="math notranslate nohighlight">\(\vec{u}\left(t\right)\)</span> at that exact point in time:</p>
+<div class="math notranslate nohighlight">
+\[\vec{y}\left(t\right) = \vec{h}\left(\vec{u}\left(t\right)\right)\]</div>
+<p>For a dynamic system, the output at a given point in time may also depend on the
+inputs at other points in time. In the real world, all systems are <em>causal</em>, i.e.
+the effect always comes after the cause. Thus, for a causal dynamic system, the
+output at a point in time <span class="math notranslate nohighlight">\(t\)</span> may only depend on the inputs at times
+before <span class="math notranslate nohighlight">\(t\)</span>.</p>
+<p>That means that dynamic systems must have some kind of memory to represent the
+effects of earlier inputs. We say that a dynamical system has a <em>state</em> and we
+represent that state as a vector. For most practical applications that state
+has finite dimension.</p>
+<section id="continuous-time-systems">
+<h2><a class="toc-backref" href="#id2">Continuous-time Systems</a><a class="headerlink" href="#continuous-time-systems" title="Permalink to this headline"></a></h2>
+<p>MoDyPy supports modelling continuous-time systems in state-space formulation:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\vec{x}\left(t_0\right) &amp;= \vec{x}_0 \\
+\frac{d}{dt} \vec{x}\left(t\right) &amp;=
+    \vec{g}\left(t, \vec{x}\left(t\right), \vec{u}\left(t\right)\right) \\
+\vec{y}\left(t\right) &amp;=
+    \vec{h}\left(t, \vec{x}\left(t\right), \vec{u}\left(t\right)\right)\end{split}\]</div>
+<p>Here,</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><span class="math notranslate nohighlight">\(\vec{x}\left(t\right)\)</span> is a vector that represents the <em>state</em> of</dt><dd><p>the system at time <span class="math notranslate nohighlight">\(t\)</span>, and</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><span class="math notranslate nohighlight">\(\vec{x}_0\)</span> is the <em>initial state</em> or <em>initial condition</em> of the system</dt><dd><p>at time <span class="math notranslate nohighlight">\(t_0\)</span>.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>The function <span class="math notranslate nohighlight">\(\vec{g}\)</span> describes the derivative of the state
+with respect to time. That is, it describes how the state evolves with time.
+Again, it may also depend on the time, the state and the input vector.</p>
+<p>Finding the value of <span class="math notranslate nohighlight">\(\vec{x}\left(t\right)\)</span> for some value of <span class="math notranslate nohighlight">\(t\)</span>
+based on the equations given above is called an
+<a class="reference external" href="https://en.wikipedia.org/wiki/Initial_value_problem">initial value problem</a>,
+and closed solutions are only known for specific forms of <span class="math notranslate nohighlight">\(\vec{g}\)</span>, such
+as those that are linear. For most other cases, numerical approximations of the
+solutions are available and also sufficient.</p>
+</section>
+<section id="discrete-time-systems">
+<h2><a class="toc-backref" href="#id3">Discrete-Time Systems</a><a class="headerlink" href="#discrete-time-systems" title="Permalink to this headline"></a></h2>
+<p>While continuous-time systems allow us to easily describe typical physical
+processes, there are some applications which require us to describe the progression
+of a system in discrete time steps. In that case, the state and output only
+change at specific points in time. Usually, these points in time are
+regularly-spaced, and the time between two consecutive of such points in time is
+called the <em>period</em> of the system.</p>
+<p>A typical formulation you will find is the following:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\vec{x}_{k+1} &amp;= \vec{g}\left(k, \vec{x}_k, \vec{u}_k\right) \\
+\vec{y}_k &amp;= \vec{h}\left(k, \vec{x}_k, \vec{u}_k\right)\end{split}\]</div>
+<p>This kind of system can be easily simulated by a computer, as the state at the
+respective next time step is explicitly given, while in the continuous case, an
+initial value problem with differential equations needs to be solved first.
+This is also why digital controllers or filters implemented in software are
+typically modelled as discrete-time systems.</p>
+</section>
+<section id="system-properties">
+<h2><a class="toc-backref" href="#id4">System Properties</a><a class="headerlink" href="#system-properties" title="Permalink to this headline"></a></h2>
+<p>Systems may be classified according to a set of attributes, such as
+<em>time-dependency</em>, <em>linearity</em> or <em>autonomy</em>. In the following, a few important
+attributes for systems are given:</p>
+<dl class="simple">
+<dt>time-invariance</dt><dd><p>A system is said to be <em>time-invariant</em> if both <span class="math notranslate nohighlight">\(\vec{g}\)</span> and
+<span class="math notranslate nohighlight">\(\vec{h}\)</span> are independent of the parameter <span class="math notranslate nohighlight">\(t\)</span>. A system that
+is not time-invariant is said to be <em>time-varying</em>.</p>
+</dd>
+<dt>linearity</dt><dd><p>A system is said to be <em>linear</em> if both <span class="math notranslate nohighlight">\(\vec{g}\)</span> and
+<span class="math notranslate nohighlight">\(\vec{h}\)</span> are linear in their parameters <span class="math notranslate nohighlight">\(t\)</span>, <span class="math notranslate nohighlight">\(\vec{x}\)</span> and
+<span class="math notranslate nohighlight">\(\vec{u}\)</span>. In that case, both functions can take a specific form and
+closed solutions are available. For more information, see
+<a class="reference internal" href="#linear-systems"><span class="std std-ref">Linear Time-Invariant Systems</span></a>. Systems that are not linear are called <em>non-linear</em>.</p>
+</dd>
+<dt>autonomy</dt><dd><p>A system is said to be <em>autonomous</em> if both <span class="math notranslate nohighlight">\(\vec{g}\)</span> and
+<span class="math notranslate nohighlight">\(\vec{h}\)</span> are independent of the input <span class="math notranslate nohighlight">\(\vec{u}\)</span>.</p>
+</dd>
+</dl>
+</section>
+<section id="linear-time-invariant-systems">
+<span id="linear-systems"></span><h2><a class="toc-backref" href="#id5">Linear Time-Invariant Systems</a><a class="headerlink" href="#linear-time-invariant-systems" title="Permalink to this headline"></a></h2>
+<p>A very interesting special class of systems are <em>linear and time-invariant</em>
+systems, or <em>LTI</em> for short. For continuous-time systems, these can be expressed
+in the following form:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\frac{d}{dt} \vec{x} &amp;= A \vec{x} + B \vec{u} \\
+\vec{y} &amp;= C \vec{x} + D \vec{u}\end{split}\]</div>
+<p>with matrices <span class="math notranslate nohighlight">\(A\)</span>, <span class="math notranslate nohighlight">\(B\)</span>, <span class="math notranslate nohighlight">\(C\)</span>, <span class="math notranslate nohighlight">\(D\)</span>. Linear discrete-time
+systems can be expressed in a similar form:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\vec{x}_{k+1} &amp;= A \vec{x}_k + B \vec{u}_k \\
+\vec{y}_k &amp;= C \vec{x}_k + D \vec{u}_k\end{split}\]</div>
+<p>These systems are particularly interesting, because there are generic methods
+for solving the differential and difference equations for the state in closed
+form, for analysing the
+<a class="reference external" href="https://en.wikipedia.org/wiki/Controllability">controllability</a>,
+<a class="reference external" href="https://en.wikipedia.org/wiki/Observability">observability</a> and
+<a class="reference external" href="https://en.wikipedia.org/wiki/Stability_theory">stability</a> of such a system
+and for designing <a class="reference external" href="https://en.wikipedia.org/wiki/Control_system">controllers</a>
+and so-called <a class="reference external" href="https://en.wikipedia.org/wiki/State_observer">observers</a>.</p>
+<p>However, MoDyPy is able to handle non-linear and linear systems of both the
+discrete- and the continuous-time variant. Specifically, MoDyPy is designed to
+handle mixed systems consisting of continuous-time and discrete-time parts,
+also with mixed periods. It can also
+<a class="reference internal" href="api/packages/linearization.html"><span class="doc">derive linear approximations</span></a> of the dynamics
+of a continuous-time non-linear system.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="MoDyPy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="guide.html" class="btn btn-neutral float-right" title="Programmer’s Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

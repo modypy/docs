@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zero-Crossing Events: A Bouncing Ball &mdash; MoDyPy v2.1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Ports and Blocks: A DC-Motor with Propeller" href="05_dc_engine.html" />
+    <link rel="prev" title="Multi-Dimensional States: A Planet Orbit" href="03_planet_orbit.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> MoDyPy
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../guide.html">User’s Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="01_integrator.html">Single States: A Simple Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_pendulum.html">Multiple States: A Pendulum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_planet_orbit.html">Multi-Dimensional States: A Planet Orbit</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Zero-Crossing Events: A Bouncing Ball</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deriving-the-equations">Deriving the Equations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#defining-our-system">Defining our System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-simulation">Running the Simulation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_dc_engine.html">Ports and Blocks: A DC-Motor with Propeller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_dc_engine_sampling.html">Discrete-Time: Sampling a DC-Engine</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_water_tank.html">Steady-State: A Water Tank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_linearization.html">Linearizing the Water Tank</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../guide.html">User’s Guide</a> &raquo;</li>
+      <li>Zero-Crossing Events: A Bouncing Ball</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/04_bouncing_ball.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="zero-crossing-events-a-bouncing-ball">
+<h1>Zero-Crossing Events: A Bouncing Ball<a class="headerlink" href="#zero-crossing-events-a-bouncing-ball" title="Permalink to this headline"></a></h1>
+<p>So far we have only modeled systems without any discontinuities. Now we want to
+model a bouncing ball without explicitly modelling the elasticity of the ball.
+To do that, we need to detect when the ball hits the ground and modify its
+velocity according to the law of reflection.</p>
+<p>After this exercise you will know</p>
+<ul class="simple">
+<li><p>how to describe zero-crossing events, and</p></li>
+<li><p>how to update the state as a reaction to such an event.</p></li>
+</ul>
+<section id="deriving-the-equations">
+<h2>Deriving the Equations<a class="headerlink" href="#deriving-the-equations" title="Permalink to this headline"></a></h2>
+<p>When not in contact with the ground, our ball at height <span class="math notranslate nohighlight">\(h\left(t\right)\)</span>
+and with velocity <span class="math notranslate nohighlight">\(v_y\left(t\right)\)</span> will simply be accelerated by
+gravity:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\frac{d}{dt} h\left(t\right) &amp;= v_y\left(t\right) \\
+\frac{d}{dt} v_y\left(t\right) &amp;= -g\end{split}\]</div>
+<p>However, once we hit the ground, the velocity will change its direction. Also,
+its magnitude will be diminished due to friction losses inside the ball, so we
+will have the new state and velocity after the bounce to be:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}h'\left(t\right) &amp;= \left|h\left(t\right)\right| \\
+v'\left(t\right) &amp;= - \delta \times v\left(t\right)\end{split}\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(\delta\)</span> is the coefficient of restitution.</p>
+<p>We define the time when the ball hits the ground as the time when
+<span class="math notranslate nohighlight">\(h\left(t\right)=0\)</span>. Put another way, the event occurs as
+<span class="math notranslate nohighlight">\(h\left(t\right)\)</span> crosses the zero. This is why we call this a
+<em>zero-crossing event</em>.</p>
+</section>
+<section id="defining-our-system">
+<h2>Defining our System<a class="headerlink" href="#defining-our-system" title="Permalink to this headline"></a></h2>
+<p>Let’s define our system and our states first:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">modypy.blocks.linear</span> <span class="kn">import</span> <span class="n">integrator</span>
+<span class="kn">from</span> <span class="nn">modypy.model</span> <span class="kn">import</span> <span class="n">System</span><span class="p">,</span> <span class="n">State</span><span class="p">,</span> <span class="n">ZeroCrossEventSource</span>
+<span class="kn">from</span> <span class="nn">modypy.simulation</span> <span class="kn">import</span> <span class="n">Simulator</span>
+
+<span class="c1"># The system parameters</span>
+<span class="n">DELTA</span> <span class="o">=</span> <span class="mf">0.7</span>
+<span class="n">G</span> <span class="o">=</span> <span class="mf">9.81</span>
+
+<span class="c1"># The initial conditions</span>
+<span class="n">INITIAL_HEIGHT</span> <span class="o">=</span> <span class="mf">10.0</span>
+<span class="n">INITIAL_VELOCITY</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+<span class="c1"># The system</span>
+<span class="n">system</span> <span class="o">=</span> <span class="n">System</span><span class="p">()</span>
+
+
+<span class="c1"># The system states</span>
+<span class="k">def</span> <span class="nf">velocity_dt</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the derivative of the vertical speed&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">G</span>
+
+
+<span class="n">velocity</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+                 <span class="n">derivative_function</span><span class="o">=</span><span class="n">velocity_dt</span><span class="p">,</span>
+                 <span class="n">initial_condition</span><span class="o">=</span><span class="n">INITIAL_VELOCITY</span><span class="p">)</span>
+<span class="n">height</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+                    <span class="n">input_signal</span><span class="o">=</span><span class="n">velocity</span><span class="p">,</span>
+                    <span class="n">initial_condition</span><span class="o">=</span><span class="n">INITIAL_HEIGHT</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>So far, there is not much difference to the previous examples. But now we define
+our bounce-event:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define the zero-crossing-event</span>
+<span class="k">def</span> <span class="nf">bounce_event_function</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Define the value of the event function for detecting bounces&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="n">height</span><span class="p">]</span>
+
+
+<span class="n">bounce_event</span> <span class="o">=</span> <span class="n">ZeroCrossEventSource</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+                                    <span class="n">event_function</span><span class="o">=</span><span class="n">bounce_event_function</span><span class="p">,</span>
+                                    <span class="n">direction</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The function <code class="docutils literal notranslate"><span class="pre">bounce_event_function</span></code> is defined in such a way so that its
+value changes its sign exactly when our ball hits the ground (we assume that our
+ball is infinitely small – we do physics after all).</p>
+<p>The parameter <code class="docutils literal notranslate"><span class="pre">direction</span></code> tells the simulator that only changes from positive
+to negative sign should be considered. Sign changes in the opposite directions
+would not be considered.</p>
+<p>Adding this event source to our system instructs the simulator to observe the
+value of the event function over time and to take special note of when its value
+changes sign. However, we can do more:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define the event-handler</span>
+<span class="k">def</span> <span class="nf">bounce_event_handler</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Reverse the direction of motion after a bounce&quot;&quot;&quot;</span>
+    <span class="n">data</span><span class="p">[</span><span class="n">height</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">height</span><span class="p">])</span>
+    <span class="n">data</span><span class="p">[</span><span class="n">velocity</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">DELTA</span><span class="o">*</span><span class="n">data</span><span class="p">[</span><span class="n">velocity</span><span class="p">]</span>
+
+
+<span class="n">bounce_event</span><span class="o">.</span><span class="n">register_listener</span><span class="p">(</span><span class="n">bounce_event_handler</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The function <code class="docutils literal notranslate"><span class="pre">bounce_event_handler</span></code> applies exactly that change to our state
+which we described above by changing the sign and the magnitude of the velocity.
+In addition, it will ensure that the height is non-negative. We do this to
+avoid a continuing stream of zero-crossings due to numerical inaccuracies.</p>
+<p>Also, the <code class="docutils literal notranslate"><span class="pre">direction</span></code> parameter to the <code class="docutils literal notranslate"><span class="pre">ZeroCrossingEventSource</span></code> constructor
+becomes important again here as well, as the re-assignment of the height state
+with a non-negative value may also lead to a sign-change of the height state
+variable, and thus lead to another zero-crossing event. As a consequence, and
+endless sequence of events.</p>
+</section>
+<section id="running-the-simulation">
+<h2>Running the Simulation<a class="headerlink" href="#running-the-simulation" title="Permalink to this headline"></a></h2>
+<p>Now we can run a simulation again:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run a simulation</span>
+<span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+                      <span class="n">start_time</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">msg</span> <span class="o">=</span> <span class="n">simulator</span><span class="o">.</span><span class="n">run_until</span><span class="p">(</span><span class="n">time_boundary</span><span class="o">=</span><span class="mf">8.0</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Simulation failed with message &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">msg</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="c1"># Plot the result</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simulator</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+             <span class="n">simulator</span><span class="o">.</span><span class="n">result</span><span class="p">[</span><span class="n">height</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Bouncing Ball&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;04_bouncing_ball_simulation.png&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The resulting plot is shown in <a class="reference internal" href="#bouncing-ball-simulation"><span class="std std-numref">Fig. 7</span></a>. As you can
+see, our ball bounces happily.</p>
+<figure class="align-center" id="id1">
+<span id="bouncing-ball-simulation"></span><img alt="Results of bouncing ball simulation" src="../_images/04_bouncing_ball_simulation.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 7 </span><span class="caption-text">Bouncing ball simulation</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="03_planet_orbit.html" class="btn btn-neutral float-left" title="Multi-Dimensional States: A Planet Orbit" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="05_dc_engine.html" class="btn btn-neutral float-right" title="Ports and Blocks: A DC-Motor with Propeller" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

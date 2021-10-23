@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modypy.simulation &mdash; MoDyPy 1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> MoDyPy
+            <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>modypy.simulation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for modypy.simulation</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">itertools</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.integrate</span>
+<span class="kn">import</span> <span class="nn">scipy.optimize</span>
+
+<span class="kn">from</span> <span class="nn">modypy.model.system</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">modypy.model.evaluation</span> <span class="kn">import</span> <span class="n">Evaluator</span><span class="p">,</span> <span class="n">DataProvider</span><span class="p">,</span> <span class="n">PortProvider</span>
+
+<span class="n">INITIAL_RESULT_SIZE</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="n">RESULT_SIZE_EXTENSION</span> <span class="o">=</span> <span class="mi">16</span>
+
+<span class="n">DEFAULT_INTEGRATOR</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">integrate</span><span class="o">.</span><span class="n">DOP853</span>
+<span class="n">DEFAULT_INTEGRATOR_OPTIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;rtol&#39;</span><span class="p">:</span> <span class="mf">1.E-12</span><span class="p">,</span>
+    <span class="s1">&#39;atol&#39;</span><span class="p">:</span> <span class="mf">1.E-12</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">DEFAULT_ROOTFINDER</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">brentq</span>
+<span class="n">DEFAULT_ROOTFINDER_OPTIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;xtol&#39;</span><span class="p">:</span> <span class="mf">1.E-12</span><span class="p">,</span>
+    <span class="s1">&#39;maxiter&#39;</span><span class="p">:</span> <span class="mi">1000</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="SimulationResult"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.SimulationResult">[docs]</a><span class="k">class</span> <span class="nc">SimulationResult</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The results provided by a simulation.</span>
+
+<span class="sd">    A `SimulationResult` object captures the time series provided by a simulation.</span>
+<span class="sd">    It has properties `t`, `state` and `output` representing the time, state vector and</span>
+<span class="sd">    output vector for each individual sample.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">:</span> <span class="n">System</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">system</span> <span class="o">=</span> <span class="n">system</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">INITIAL_RESULT_SIZE</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">INITIAL_RESULT_SIZE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_inputs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">INITIAL_RESULT_SIZE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_signals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">INITIAL_RESULT_SIZE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_signals</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_events</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">INITIAL_RESULT_SIZE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_events</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">INITIAL_RESULT_SIZE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The time vector of the simulation result&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_t</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The input vector of the simulation result&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The state vector of the simulation result&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">signals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The signal vector of the simulation result&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_signals</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The event vector of the simulation result&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The output vector of the simulation result&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span>
+
+<div class="viewcode-block" id="SimulationResult.append"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.SimulationResult.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">signals</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Append an entry to the result vectors.</span>
+
+<span class="sd">        :param time: The time tag for the entry</span>
+<span class="sd">        :param inputs: The input vector</span>
+<span class="sd">        :param state: The state vector</span>
+<span class="sd">        :param signals: The signals vector</span>
+<span class="sd">        :param events: The events vector</span>
+<span class="sd">        :param outputs: The outputs vector</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_t</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extend_space</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_t</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_signals</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">signals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">events</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">outputs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="SimulationResult.extend_space"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.SimulationResult.extend_space">[docs]</a>    <span class="k">def</span> <span class="nf">extend_space</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extend the storage space for the vectors</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_t</span><span class="p">,</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">RESULT_SIZE_EXTENSION</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span><span class="p">,</span>
+                             <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">RESULT_SIZE_EXTENSION</span><span class="p">,</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_inputs</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">,</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">RESULT_SIZE_EXTENSION</span><span class="p">,</span>
+                                      <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_signals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_signals</span><span class="p">,</span>
+                              <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">RESULT_SIZE_EXTENSION</span><span class="p">,</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_signals</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_events</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">,</span>
+                             <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">RESULT_SIZE_EXTENSION</span><span class="p">,</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_events</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">,</span>
+                              <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">RESULT_SIZE_EXTENSION</span><span class="p">,</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">))]</span></div></div>
+
+
+<div class="viewcode-block" id="Simulator"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.Simulator">[docs]</a><span class="k">class</span> <span class="nc">Simulator</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simulator for dynamic systems.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">system</span><span class="p">,</span>
+                 <span class="n">start_time</span><span class="p">,</span>
+                 <span class="n">initial_condition</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">integrator_constructor</span><span class="o">=</span><span class="n">DEFAULT_INTEGRATOR</span><span class="p">,</span>
+                 <span class="n">integrator_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">rootfinder_constructor</span><span class="o">=</span><span class="n">DEFAULT_ROOTFINDER</span><span class="p">,</span>
+                 <span class="n">rootfinder_options</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a simulator for the system.</span>
+
+<span class="sd">        The simulator is written with the interface of</span>
+<span class="sd">        `scipy.integrate.OdeSolver` in mind for the integrator, specifically</span>
+<span class="sd">        using the constructor, the `step` and the `state_trajectory` functions as</span>
+<span class="sd">        well as the `status` property. However, it is possible to use other</span>
+<span class="sd">        integrators if they honor this interface.</span>
+
+<span class="sd">        Similarly, the rootfinder is expected to comply with the interface of</span>
+<span class="sd">        `scipy.optimize.brentq`.</span>
+
+<span class="sd">        :param system: The system to be simulated</span>
+<span class="sd">        :param start_time: The start time of the simulation</span>
+<span class="sd">        :param initial_condition: The initial condition (optional)</span>
+<span class="sd">        :param integrator_constructor: The constructor function for the</span>
+<span class="sd">            ODE integrator to be used; optional: if not given,</span>
+<span class="sd">            ``DEFAULT_INTEGRATOR`` is used.</span>
+<span class="sd">        :param integrator_options: The options for ``integrator_constructor``;</span>
+<span class="sd">            optional: if not given, ``DEFAULT_INTEGRATOR_OPTIONS`` is used.</span>
+<span class="sd">        :param rootfinder_constructor: The constructor function for the</span>
+<span class="sd">            root finder to be used; optional: if not given,</span>
+<span class="sd">            ``DEFAULT_ROOTFINDER`` is used.</span>
+<span class="sd">        :param rootfinder_options: The options for ``rootfinder_constructor``;</span>
+<span class="sd">            optional: if not given, ``DEFAULT_ROOTFINDER_OPTIONS`` is used</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">system</span> <span class="o">=</span> <span class="n">system</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="n">start_time</span>
+
+        <span class="k">if</span> <span class="n">initial_condition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initial_condition</span> <span class="o">=</span> <span class="n">initial_condition</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initial_condition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">initial_condition</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">integrator_constructor</span> <span class="o">=</span> <span class="n">integrator_constructor</span>
+        <span class="k">if</span> <span class="n">integrator_options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">integrator_options</span> <span class="o">=</span> <span class="n">DEFAULT_INTEGRATOR_OPTIONS</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">integrator_options</span> <span class="o">=</span> <span class="n">integrator_options</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">rootfinder_constructor</span> <span class="o">=</span> <span class="n">rootfinder_constructor</span>
+        <span class="k">if</span> <span class="n">rootfinder_options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rootfinder_options</span> <span class="o">=</span> <span class="n">DEFAULT_ROOTFINDER_OPTIONS</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rootfinder_options</span> <span class="o">=</span> <span class="n">rootfinder_options</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_condition</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">SimulationResult</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+
+        <span class="n">evaluator</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">(</span><span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                              <span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                              <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_inputs</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_signals</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">signals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_event_values</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">event_values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_outputs</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">outputs</span>
+
+        <span class="c1"># Store the initial state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                           <span class="n">inputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_inputs</span><span class="p">,</span>
+                           <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
+                           <span class="n">signals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_signals</span><span class="p">,</span>
+                           <span class="n">events</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_event_values</span><span class="p">,</span>
+                           <span class="n">outputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_outputs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Simulator.step"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.Simulator.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t_bound</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute a single execution step.</span>
+
+<span class="sd">        :param t_bound: The maximum time until which the simulation may proceed</span>
+<span class="sd">        :return: ``None`` if successful, a message string otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">last_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span>
+        <span class="n">last_event_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_event_values</span>
+
+        <span class="n">integrator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">integrator_constructor</span><span class="p">(</span><span class="n">fun</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state_derivative</span><span class="p">,</span>
+                                                 <span class="n">t0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                                                 <span class="n">y0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
+                                                 <span class="n">t_bound</span><span class="o">=</span><span class="n">t_bound</span><span class="p">,</span>
+                                                 <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">integrator_options</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="n">integrator</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">message</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">message</span>
+
+        <span class="n">evaluator</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">(</span><span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                              <span class="n">time</span><span class="o">=</span><span class="n">integrator</span><span class="o">.</span><span class="n">t</span><span class="p">,</span>
+                              <span class="n">state</span><span class="o">=</span><span class="n">integrator</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="c1"># Check for events</span>
+        <span class="n">event_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">last_event_values</span><span class="p">)</span> <span class="o">!=</span>
+                                       <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">evaluator</span><span class="o">.</span><span class="n">event_values</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">event_indices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">events_occurred</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">event_indices</span><span class="p">]</span>
+            <span class="n">state_interpolator</span> <span class="o">=</span> <span class="n">integrator</span><span class="o">.</span><span class="n">dense_output</span><span class="p">()</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">last_time</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="n">integrator</span><span class="o">.</span><span class="n">t</span>
+
+            <span class="n">first_event</span><span class="p">,</span> <span class="n">first_event_time</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">find_first_event</span><span class="p">(</span><span class="n">state_interpolator</span><span class="p">,</span>
+                                      <span class="n">start_time</span><span class="p">,</span>
+                                      <span class="n">end_time</span><span class="p">,</span>
+                                      <span class="n">events_occurred</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">=</span> <span class="n">first_event_time</span> <span class="o">+</span> <span class="mf">1.E-3</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="n">state_interpolator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">first_event</span><span class="o">.</span><span class="n">update_function</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Call the event handler value to update the state</span>
+                <span class="n">update_evaluator</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">(</span><span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                                             <span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                                             <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">)</span>
+                <span class="n">state_updater</span> <span class="o">=</span> <span class="n">StateUpdater</span><span class="p">(</span><span class="n">update_evaluator</span><span class="p">)</span>
+                <span class="n">port_provider</span> <span class="o">=</span> <span class="n">PortProvider</span><span class="p">(</span><span class="n">update_evaluator</span><span class="p">)</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">DataProvider</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                                    <span class="n">states</span><span class="o">=</span><span class="n">state_updater</span><span class="p">,</span>
+                                    <span class="n">inputs</span><span class="o">=</span><span class="n">port_provider</span><span class="p">)</span>
+                <span class="n">first_event</span><span class="o">.</span><span class="n">update_function</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="n">state_updater</span><span class="o">.</span><span class="n">new_state</span>
+
+            <span class="n">evaluator</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">(</span><span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                                  <span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                                  <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_inputs</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">inputs</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_signals</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">signals</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_event_values</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">event_values</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_outputs</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">outputs</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                               <span class="n">inputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_inputs</span><span class="p">,</span>
+                               <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
+                               <span class="n">signals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_signals</span><span class="p">,</span>
+                               <span class="n">events</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_event_values</span><span class="p">,</span>
+                               <span class="n">outputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_outputs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># No event occurred, so we simply accept the integrator end-point as the</span>
+        <span class="c1"># next sample point.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">=</span> <span class="n">integrator</span><span class="o">.</span><span class="n">t</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_inputs</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="n">integrator</span><span class="o">.</span><span class="n">y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_signals</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">signals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_event_values</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">event_values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_outputs</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">outputs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                           <span class="n">inputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_inputs</span><span class="p">,</span>
+                           <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
+                           <span class="n">signals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_signals</span><span class="p">,</span>
+                           <span class="n">events</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_event_values</span><span class="p">,</span>
+                           <span class="n">outputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_outputs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Simulator.find_first_event"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.Simulator.find_first_event">[docs]</a>    <span class="k">def</span> <span class="nf">find_first_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_trajectory</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">events_occurred</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determine the event that occurred first.</span>
+
+<span class="sd">        :param state_trajectory: A callable that accepts a time in the interval</span>
+<span class="sd">            given by ``start_time`` and ``end_time`` and provides the state</span>
+<span class="sd">            vector for that point in time.</span>
+<span class="sd">        :param start_time: The lower limit of the time range to be considered.</span>
+<span class="sd">        :param end_time: The upper limit of the time range to be considered.</span>
+<span class="sd">        :param events_occurred: The list of events that occurred within the</span>
+<span class="sd">            given time interval.</span>
+<span class="sd">        :return: A tuple `(event, time)`, giving the event that occurred first</span>
+<span class="sd">            and the time at which it occurred.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># For each event that occurred we determine the exact time that it</span>
+        <span class="c1"># occurred. For that, we use the the state trajectory provided and</span>
+        <span class="c1"># determine the time at which the event value becomes zero.</span>
+        <span class="c1"># We do that for every event and then identify the event that has the</span>
+        <span class="c1"># minimum time associated with it.</span>
+        <span class="n">event_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">events_occurred</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">list_index</span><span class="p">,</span> <span class="n">event</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">events_occurred</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">objective_function</span><span class="p">(</span><span class="n">time</span><span class="p">):</span>
+                <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                Determine the value of the event at different points in</span>
+<span class="sd">                time.</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+
+                <span class="n">intermediate_state</span> <span class="o">=</span> <span class="n">state_trajectory</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+                <span class="n">intermediate_evaluator</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">(</span><span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                                                   <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
+                                                   <span class="n">state</span><span class="o">=</span><span class="n">intermediate_state</span><span class="p">)</span>
+                <span class="n">event_value</span> <span class="o">=</span> <span class="n">intermediate_evaluator</span><span class="o">.</span><span class="n">get_event_value</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">event_value</span>
+
+            <span class="n">event_times</span><span class="p">[</span><span class="n">list_index</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">rootfinder_constructor</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="n">objective_function</span><span class="p">,</span>
+                                            <span class="n">a</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span>
+                                            <span class="n">b</span><span class="o">=</span><span class="n">end_time</span><span class="p">,</span>
+                                            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">rootfinder_options</span><span class="p">)</span>
+        <span class="n">minimum_list_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">event_times</span><span class="p">)</span>
+        <span class="n">first_event</span> <span class="o">=</span> <span class="n">events_occurred</span><span class="p">[</span><span class="n">minimum_list_index</span><span class="p">]</span>
+        <span class="n">first_event_time</span> <span class="o">=</span> <span class="n">event_times</span><span class="p">[</span><span class="n">minimum_list_index</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">first_event</span><span class="p">,</span> <span class="n">first_event_time</span></div>
+
+<div class="viewcode-block" id="Simulator.run_until"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.Simulator.run_until">[docs]</a>    <span class="k">def</span> <span class="nf">run_until</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t_bound</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the simulation until the given end time</span>
+
+<span class="sd">        :param t_bound: The end time</span>
+<span class="sd">        :return: ``None`` if successful, a message string otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">&lt;</span> <span class="n">t_bound</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">t_bound</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">message</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">message</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="nf">state_derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="n">evaluator</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">(</span><span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
+        <span class="n">state_derivative</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">state_derivative</span>
+        <span class="k">return</span> <span class="n">state_derivative</span></div>
+
+
+<span class="k">class</span> <span class="nc">StateUpdater</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evaluator</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_state</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">start_index</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">state_index</span>
+        <span class="n">end_index</span> <span class="o">=</span> <span class="n">start_index</span> <span class="o">+</span> <span class="n">state</span><span class="o">.</span><span class="n">size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_state</span><span class="p">[</span><span class="n">start_index</span><span class="p">:</span><span class="n">end_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="n">start_index</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">state_index</span>
+        <span class="n">end_index</span> <span class="o">=</span> <span class="n">start_index</span> <span class="o">+</span> <span class="n">state</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_state</span><span class="p">[</span><span class="n">start_index</span><span class="p">:</span><span class="n">end_index</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

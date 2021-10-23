@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modypy.simulation &mdash; MoDyPy 3.0.0+0.gd993396.dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> MoDyPy
+            <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide.html">User’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>modypy.simulation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for modypy.simulation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Provide classes for simulation.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.integrate</span>
+<span class="kn">import</span> <span class="nn">scipy.optimize</span>
+
+<span class="kn">from</span> <span class="nn">modypy.model</span> <span class="kn">import</span> <span class="n">State</span><span class="p">,</span> <span class="n">InputSignal</span><span class="p">,</span> <span class="n">SystemState</span>
+<span class="kn">from</span> <span class="nn">modypy.model.events</span> <span class="kn">import</span> <span class="n">ClockQueue</span>
+<span class="kn">from</span> <span class="nn">modypy.model.system</span> <span class="kn">import</span> <span class="n">System</span>
+
+<span class="n">INITIAL_RESULT_SIZE</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="n">RESULT_SIZE_EXTENSION</span> <span class="o">=</span> <span class="mi">16</span>
+
+<span class="n">DEFAULT_INTEGRATOR</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">integrate</span><span class="o">.</span><span class="n">DOP853</span>
+
+
+<div class="viewcode-block" id="SimulationError"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.SimulationError">[docs]</a><span class="k">class</span> <span class="nc">SimulationError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Exception raised when an error occurs during simulation&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="IntegrationError"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.IntegrationError">[docs]</a><span class="k">class</span> <span class="nc">IntegrationError</span><span class="p">(</span><span class="n">SimulationError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Exception raised when an error is reported by the integrator&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ExcessiveEventError"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.ExcessiveEventError">[docs]</a><span class="k">class</span> <span class="nc">ExcessiveEventError</span><span class="p">(</span><span class="n">SimulationError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Exception raised when an excessive number of successive events occurs.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="SimulationResult"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.SimulationResult">[docs]</a><span class="k">class</span> <span class="nc">SimulationResult</span><span class="p">(</span><span class="n">Sequence</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The results provided by a simulation.</span>
+
+<span class="sd">    A `SimulationResult` object captures the time series provided by a</span>
+<span class="sd">    simulation. It has properties `t`, `state` and `inputs` representing the</span>
+<span class="sd">    time, state vector and inputs vector for each individual sample.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">:</span> <span class="n">System</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">system</span> <span class="o">=</span> <span class="n">system</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">INITIAL_RESULT_SIZE</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_inputs</span><span class="p">,</span> <span class="n">INITIAL_RESULT_SIZE</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span> <span class="n">INITIAL_RESULT_SIZE</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">collect_from</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The time vector of the simulation result&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_t</span><span class="p">[</span><span class="mi">0</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The input vector of the simulation result&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span><span class="p">[:,</span> <span class="mi">0</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The state vector of the simulation result&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[:,</span> <span class="mi">0</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span>
+
+<div class="viewcode-block" id="SimulationResult.collect_from"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.SimulationResult.collect_from">[docs]</a>    <span class="k">def</span> <span class="nf">collect_from</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Collect data points from the given source</span>
+
+<span class="sd">        The source must be an iterable providing a series system states</span>
+<span class="sd">        representing the system states at the individual time points&quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimulationResult.append"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.SimulationResult.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Append an entry to the result vectors.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            system_state: The system state to append</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_append</span><span class="p">(</span><span class="n">system_state</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">system_state</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">system_state</span><span class="o">.</span><span class="n">state</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Append an entry to the result vectors.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          time: The time tag for the entry</span>
+<span class="sd">          inputs: The input vector</span>
+<span class="sd">          state: The state vector</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_t</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extend_space</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_t</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">state</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span> <span class="o">+=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="SimulationResult.extend_space"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.SimulationResult.extend_space">[docs]</a>    <span class="k">def</span> <span class="nf">extend_space</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extend the storage space for the vectors&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_t</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">RESULT_SIZE_EXTENSION</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_inputs</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_inputs</span><span class="p">,</span> <span class="n">RESULT_SIZE_EXTENSION</span><span class="p">)),</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span> <span class="n">RESULT_SIZE_EXTENSION</span><span class="p">)),</span>
+        <span class="p">]</span></div>
+
+<div class="viewcode-block" id="SimulationResult.get_state_value"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.SimulationResult.get_state_value">[docs]</a>    <span class="k">def</span> <span class="nf">get_state_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine the value of the given state in this result object&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="n">state</span><span class="o">.</span><span class="n">state_slice</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,))</span></div>
+
+<div class="viewcode-block" id="SimulationResult.get_input_value"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.SimulationResult.get_input_value">[docs]</a>    <span class="k">def</span> <span class="nf">get_input_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">:</span> <span class="n">InputSignal</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine the value of the given input in this result object&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="n">signal</span><span class="o">.</span><span class="n">input_slice</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,))</span></div>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">SystemState</span><span class="p">(</span>
+                <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                <span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+                <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">[:,</span> <span class="n">key</span><span class="p">],</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[:,</span> <span class="n">key</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;The dictionary access interface is deprecated&quot;</span><span class="p">,</span>
+                <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="c1"># In case of a tuple, the first entity is the actual object to</span>
+                <span class="c1"># access and the remainder is the index into the object</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">obj</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">value</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">value</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="c1"># Otherwise, the item is an object to access, and we simply defer to</span>
+            <span class="c1"># the callable interface</span>
+            <span class="k">return</span> <span class="n">key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_idx</span></div>
+
+
+<div class="viewcode-block" id="Simulator"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.Simulator">[docs]</a><span class="k">class</span> <span class="nc">Simulator</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Simulator for dynamic systems.</span>
+
+<span class="sd">    The simulator is written with the interface of</span>
+<span class="sd">    `scipy.integrate.OdeSolver` in mind for the solver, specifically using</span>
+<span class="sd">    the constructor, the `step` and the `dense_output` functions as well as</span>
+<span class="sd">    the `status` property of the return value. However, it is possible to</span>
+<span class="sd">    use other integrators if they honor this interface.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        system:</span>
+<span class="sd">            The system to be simulated</span>
+<span class="sd">        start_time:</span>
+<span class="sd">            The start time of the simulation (optional, default=0)</span>
+<span class="sd">        initial_condition:</span>
+<span class="sd">            The initial condition (optional, overrides initial condition</span>
+<span class="sd">            specified in the states)</span>
+<span class="sd">        event_xtol:</span>
+<span class="sd">            The absolute tolerance for identifying the time of a</span>
+<span class="sd">            zero-crossing event.</span>
+<span class="sd">        event_maxiter:</span>
+<span class="sd">            The maximum number of iterations for identifying the time of a</span>
+<span class="sd">            zero-crossing event.</span>
+<span class="sd">        solver:</span>
+<span class="sd">            The solver to be used for integrating continuous-time systems.</span>
+<span class="sd">            The default is the :class:`DOP853 &lt;scipy.integrate.DOP853&gt;`</span>
+<span class="sd">            solver.</span>
+<span class="sd">        solver_options:</span>
+<span class="sd">            Options to be passed to the solver constructor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">system</span><span class="p">:</span> <span class="n">System</span><span class="p">,</span>
+        <span class="n">start_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">initial_condition</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_successive_event_count</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+        <span class="n">event_xtol</span><span class="o">=</span><span class="mf">1.0e-12</span><span class="p">,</span>
+        <span class="n">event_maxiter</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+        <span class="n">solver_method</span><span class="o">=</span><span class="n">DEFAULT_INTEGRATOR</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">solver_options</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Construct a simulator for the system.&quot;&quot;&quot;</span>
+
+        <span class="c1"># Store the parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">system</span> <span class="o">=</span> <span class="n">system</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_successive_event_count</span> <span class="o">=</span> <span class="n">max_successive_event_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_xtol</span> <span class="o">=</span> <span class="n">event_xtol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_maxiter</span> <span class="o">=</span> <span class="n">event_maxiter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solver_method</span> <span class="o">=</span> <span class="n">solver_method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solver_options</span> <span class="o">=</span> <span class="n">solver_options</span>
+
+        <span class="c1"># Initialize the simulation state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">=</span> <span class="n">start_time</span>
+        <span class="k">if</span> <span class="n">initial_condition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="n">initial_condition</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">initial_condition</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">initial_input</span>
+
+        <span class="c1"># Reset the count of successive events</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">successive_event_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Register event tolerances and directions for easier access</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_tolerances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">tolerance</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">events</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_directions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">direction</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">events</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Check if we have continuous-time states</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">have_continuous_time_states</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">derivative_function</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">states</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create the clock queue</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clock_queue</span> <span class="o">=</span> <span class="n">ClockQueue</span><span class="p">(</span>
+            <span class="n">start_time</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span> <span class="n">clocks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">clocks</span>
+        <span class="p">)</span>
+
+        <span class="c1"># The current state is the left-sided limit of the time-dependent state</span>
+        <span class="c1"># function at the current time. To proceed, we need the right-sided</span>
+        <span class="c1"># limit, which requires us to apply all pending clock tick handlers.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_clock_ticks</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Simulator.run_until"><a class="viewcode-back" href="../../api/packages/simulation.html#modypy.simulation.Simulator.run_until">[docs]</a>    <span class="k">def</span> <span class="nf">run_until</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_boundary</span><span class="p">,</span> <span class="n">include_last</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run the simulation</span>
+
+<span class="sd">        Yields a series of :class:`modypy.model.system.SystemState` objects with</span>
+<span class="sd">        each element representing one time sample of the process.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            time_boundary:</span>
+<span class="sd">                The end time of the simulation.</span>
+<span class="sd">            include_last:</span>
+<span class="sd">                Flag indicating whether the state at the end of simulation shall</span>
+<span class="sd">                be yielded as well. In case of multiple calls to `run_until`</span>
+<span class="sd">                this should be set to `False`. Otherwise, the last system state</span>
+<span class="sd">                provided at the end of one call will be repeated at the</span>
+<span class="sd">                beginning of the next call.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            SimulationError: if an error occurs during simulation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">have_continuous_time_states</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_mixed_model_simulation</span><span class="p">(</span><span class="n">time_boundary</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_discrete_model_simulation</span><span class="p">(</span><span class="n">time_boundary</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">include_last</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">SystemState</span><span class="p">(</span>
+                <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                <span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_inputs</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_run_mixed_model_simulation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_boundary</span><span class="p">):</span>
+        <span class="c1"># The outer loop iterates over solver instances as necessary.</span>
+        <span class="c1"># Events leading to state changes will invalidate the solver, so</span>
+        <span class="c1"># a new one will have to be created. However, we&#39;ll run as long as</span>
+        <span class="c1"># possible on a single solver to save instantiation time</span>
+
+        <span class="c1"># Split events into two partitions:</span>
+        <span class="c1"># - terminating events</span>
+        <span class="c1"># - non-terminating events</span>
+        <span class="c1"># We will handle them separately later.</span>
+        <span class="n">terminating_events</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">event</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">events</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">listeners</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">]</span>
+        <span class="n">non_terminating_events</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">event</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">events</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">listeners</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">]</span>
+        <span class="n">terminating_detector</span> <span class="o">=</span> <span class="n">_EventDetector</span><span class="p">(</span>
+            <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">terminating_events</span>
+        <span class="p">)</span>
+        <span class="n">non_terminating_detector</span> <span class="o">=</span> <span class="n">_EventDetector</span><span class="p">(</span>
+            <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">non_terminating_events</span>
+        <span class="p">)</span>
+
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">&lt;</span> <span class="n">time_boundary</span><span class="p">:</span>
+            <span class="n">terminated</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="c1"># The solver can run to the time boundary or the next clock tick,</span>
+            <span class="c1"># whichever comes first.</span>
+            <span class="n">solver_bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock_queue</span><span class="o">.</span><span class="n">next_clock_tick</span>
+            <span class="k">if</span> <span class="n">solver_bound</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">solver_bound</span> <span class="o">&gt;</span> <span class="n">time_boundary</span><span class="p">:</span>
+                <span class="n">solver_bound</span> <span class="o">=</span> <span class="n">time_boundary</span>
+
+            <span class="c1"># Create the solver</span>
+            <span class="n">solver</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver_method</span><span class="p">(</span>
+                <span class="n">fun</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_state_derivative</span><span class="p">,</span>
+                <span class="n">t0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                <span class="n">y0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
+                <span class="n">t_bound</span><span class="o">=</span><span class="n">solver_bound</span><span class="p">,</span>
+                <span class="n">vectorized</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">solver_options</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Run the integration until the determined time limit</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">&lt;</span> <span class="n">solver_bound</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">terminated</span><span class="p">:</span>
+                <span class="c1"># Yield the current state (after running the clock ticks)</span>
+                <span class="k">yield</span> <span class="n">SystemState</span><span class="p">(</span>
+                    <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                    <span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_inputs</span><span class="p">,</span>
+                    <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Perform a solver step</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">IntegrationError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+                <span class="c1"># Get interpolation functions for state and inputs</span>
+                <span class="n">state_interpolator</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">dense_output</span><span class="p">()</span>
+
+                <span class="k">def</span> <span class="nf">_input_interpolator</span><span class="p">(</span><span class="n">_t</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_inputs</span>
+
+                <span class="c1"># Check for occurrence of a terminating event and determine the</span>
+                <span class="c1"># time of the earliest terminating event.</span>
+                <span class="n">first_term</span> <span class="o">=</span> <span class="n">terminating_detector</span><span class="o">.</span><span class="n">localize_first_event</span><span class="p">(</span>
+                    <span class="n">start_time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                    <span class="n">end_time</span><span class="o">=</span><span class="n">solver</span><span class="o">.</span><span class="n">t</span><span class="p">,</span>
+                    <span class="n">state</span><span class="o">=</span><span class="n">state_interpolator</span><span class="p">,</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="n">_input_interpolator</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">search_end_time</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">t</span>
+
+                <span class="c1"># Restrict the search time for non-terminating events</span>
+                <span class="k">if</span> <span class="n">first_term</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="n">first_term</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span>
+                    <span class="n">search_end_time</span> <span class="o">=</span> <span class="n">first_term</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="c1"># Find non-terminating events</span>
+                <span class="n">non_term_occs</span> <span class="o">=</span> <span class="n">non_terminating_detector</span><span class="o">.</span><span class="n">localize_events</span><span class="p">(</span>
+                    <span class="n">start_time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                    <span class="n">end_time</span><span class="o">=</span><span class="n">search_end_time</span><span class="p">,</span>
+                    <span class="n">state</span><span class="o">=</span><span class="n">state_interpolator</span><span class="p">,</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="n">_input_interpolator</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Yield intermediate states for non-terminating events in the</span>
+                <span class="c1"># order in which they occur</span>
+                <span class="n">non_term_occs</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">time</span><span class="p">,</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">non_term_occs</span><span class="p">:</span>
+                    <span class="n">event_state</span> <span class="o">=</span> <span class="n">SystemState</span><span class="p">(</span>
+                        <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                        <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
+                        <span class="n">state</span><span class="o">=</span><span class="n">state_interpolator</span><span class="p">(</span><span class="n">time</span><span class="p">),</span>
+                        <span class="n">inputs</span><span class="o">=</span><span class="n">_input_interpolator</span><span class="p">(</span><span class="n">time</span><span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="k">yield</span> <span class="n">event_state</span>
+
+                <span class="c1"># In case of a terminating event, advance time to the time of</span>
+                <span class="c1"># the event and execute its handlers.</span>
+                <span class="c1"># Otherwise, advance time to the end of the integration step</span>
+                <span class="c1"># and update the state.</span>
+                <span class="k">if</span> <span class="n">first_term</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">first_term_time</span><span class="p">,</span> <span class="n">first_term_event</span> <span class="o">=</span> <span class="n">first_term</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">=</span> <span class="n">first_term_time</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="n">state_interpolator</span><span class="p">(</span><span class="n">first_term_time</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_run_event_listeners</span><span class="p">([</span><span class="n">first_term_event</span><span class="p">])</span>
+                    <span class="n">terminated</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># No terminating event occurred</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">t</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">y</span>
+                    <span class="c1"># Reset the successive event counter</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">successive_event_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="c1"># The current state is the left-side limit of the state function</span>
+            <span class="c1"># over time. However, to properly proceed, we need the right-side</span>
+            <span class="c1"># limit, so we execute all pending clock ticks now.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_clock_ticks</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_run_discrete_model_simulation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_boundary</span><span class="p">):</span>
+        <span class="c1"># For discrete-only systems we only need to run the clocks and advance</span>
+        <span class="c1"># the time accordingly until we reach the time boundary.</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">&lt;</span> <span class="n">time_boundary</span><span class="p">:</span>
+            <span class="c1"># Yield the current state</span>
+            <span class="k">yield</span> <span class="n">SystemState</span><span class="p">(</span>
+                <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                <span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_inputs</span><span class="p">,</span>
+                <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Advance time to the next clock tick</span>
+            <span class="n">next_clock_tick</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock_queue</span><span class="o">.</span><span class="n">next_clock_tick</span>
+            <span class="k">if</span> <span class="n">next_clock_tick</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">next_clock_tick</span> <span class="o">&gt;</span> <span class="n">time_boundary</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">=</span> <span class="n">time_boundary</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">=</span> <span class="n">next_clock_tick</span>
+
+            <span class="c1"># The current state is the left-side limit of the state function</span>
+            <span class="c1"># over time. However, to properly proceed, we need the right-side</span>
+            <span class="c1"># limit, so we execute all pending clock ticks now.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_clock_ticks</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_run_clock_ticks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run all the pending clock ticks.&quot;&quot;&quot;</span>
+
+        <span class="c1"># We collect the clocks to tick here and executed all their listeners</span>
+        <span class="c1"># later.</span>
+        <span class="n">clocks_to_tick</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock_queue</span><span class="o">.</span><span class="n">tick</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">)</span>
+
+        <span class="c1"># Run all the event listeners</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_event_listeners</span><span class="p">(</span><span class="n">clocks_to_tick</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_run_event_listeners</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_sources</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run the event listeners on the given events.&quot;&quot;&quot;</span>
+
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">event_sources</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Check for excessive counts of successive events</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">successive_event_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">successive_event_count</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_successive_event_count</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ExcessiveEventError</span><span class="p">()</span>
+
+            <span class="c1"># Prepare the system state for the state updater</span>
+            <span class="n">state_updater</span> <span class="o">=</span> <span class="n">_SystemStateUpdater</span><span class="p">(</span>
+                <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                <span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_inputs</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Determine the values of all event functions before running the</span>
+            <span class="c1"># event listeners.</span>
+            <span class="n">last_event_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">event_values</span><span class="p">(</span><span class="n">state_updater</span><span class="p">)</span>
+
+            <span class="c1"># Collect all listeners associated with the events</span>
+            <span class="c1"># Note that we run each listener only once, even if it is associated</span>
+            <span class="c1"># with multiple events</span>
+            <span class="n">listeners</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                <span class="n">listener</span>
+                <span class="k">for</span> <span class="n">event_source</span> <span class="ow">in</span> <span class="n">event_sources</span>
+                <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="n">event_source</span><span class="o">.</span><span class="n">listeners</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Run the event listeners</span>
+            <span class="c1"># Note that we do not guarantee any specific order of execution</span>
+            <span class="c1"># here. Listeners thus must be written in such a way that their</span>
+            <span class="c1"># effects are the same independent of the order in which they are</span>
+            <span class="c1"># run.</span>
+            <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="n">listeners</span><span class="p">:</span>
+                <span class="n">listener</span><span class="p">(</span><span class="n">state_updater</span><span class="p">)</span>
+
+            <span class="c1"># Update the state</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="n">state_updater</span><span class="o">.</span><span class="n">state</span>
+
+            <span class="c1"># Determine the value of event functions after running the event</span>
+            <span class="c1"># listeners</span>
+            <span class="n">new_event_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">event_values</span><span class="p">(</span><span class="n">state_updater</span><span class="p">)</span>
+
+            <span class="c1"># Determine which events occurred as a result of the changed state</span>
+            <span class="n">event_mask</span> <span class="o">=</span> <span class="n">_find_active_events</span><span class="p">(</span>
+                <span class="n">start_values</span><span class="o">=</span><span class="n">last_event_values</span><span class="p">,</span>
+                <span class="n">end_values</span><span class="o">=</span><span class="n">new_event_values</span><span class="p">,</span>
+                <span class="n">tolerances</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">event_tolerances</span><span class="p">,</span>
+                <span class="n">directions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">event_directions</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">event_mask</span><span class="p">):</span>
+                <span class="n">event_sources</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">event</span>
+                    <span class="k">for</span> <span class="n">event</span><span class="p">,</span> <span class="n">flag</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">events</span><span class="p">,</span> <span class="n">event_mask</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">flag</span>
+                <span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">event_sources</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">_state_derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The state derivative function used for integrating the state over</span>
+<span class="sd">        time.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          time: The current time</span>
+<span class="sd">          state: The current state vector</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          The time-derivative of the state vector</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">system_state</span> <span class="o">=</span> <span class="n">SystemState</span><span class="p">(</span><span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
+        <span class="n">state_derivative</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">state_derivative</span><span class="p">(</span><span class="n">system_state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state_derivative</span></div>
+
+
+<span class="k">class</span> <span class="nc">_EventDetector</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Helper class for detecting and localizing events&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">xtol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">system</span> <span class="o">=</span> <span class="n">system</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">events</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xtol</span> <span class="o">=</span> <span class="n">xtol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxiter</span> <span class="o">=</span> <span class="n">maxiter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_tolerances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">event</span><span class="o">.</span><span class="n">tolerance</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_directions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">event</span><span class="o">.</span><span class="n">direction</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">localize_first_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Localize the first event occurring in the given time frame.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            start_time: The start time of the time frame.</span>
+<span class="sd">            end_time: The end time of the time_frame.</span>
+<span class="sd">            state:</span>
+<span class="sd">                A callable, with `state(t)` being the state vector at time `t`</span>
+<span class="sd">                for any scalar or one-dimensional array `t` with</span>
+<span class="sd">                `start_time &lt;= t &lt;= end_time`.</span>
+<span class="sd">            inputs:</span>
+<span class="sd">                A callable, with `state(t)` being the input vector at time `t`</span>
+<span class="sd">                for any scalar or one-dimensional array `t` with</span>
+<span class="sd">                `start_time &lt;= t &lt;= end_time`.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            A tuple `(time, event)`, giving time and event object for the first</span>
+<span class="sd">            event having occurred in the given time frame, or `None`, if none of</span>
+<span class="sd">            the events has occurred in the time frame.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">event_locs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">localize_events</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">event_locs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># At least one of the events has occurred, so we find the first one</span>
+            <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">event_locs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">evt</span><span class="p">:</span> <span class="n">evt</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">localize_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Localize the all events occurring in the given time frame.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            start_time: The start time of the time frame.</span>
+<span class="sd">            end_time: The end time of the time_frame.</span>
+<span class="sd">            state:</span>
+<span class="sd">                A callable, with `state(t)` being the state vector at time `t`</span>
+<span class="sd">                for any scalar or one-dimensional array `t` with</span>
+<span class="sd">                `start_time &lt;= t &lt;= end_time`.</span>
+<span class="sd">            inputs:</span>
+<span class="sd">                A callable, with `state(t)` being the input vector at time `t`</span>
+<span class="sd">                for any scalar or one-dimensional array `t` with</span>
+<span class="sd">                `start_time &lt;= t &lt;= end_time`.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of tuples `(time, event)`, giving time and event object for</span>
+<span class="sd">            each event having occurred in the given time frame.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_state</span> <span class="o">=</span> <span class="n">SystemState</span><span class="p">(</span>
+            <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+            <span class="n">time</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">(</span><span class="n">start_time</span><span class="p">),</span>
+            <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">(</span><span class="n">start_time</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">end_state</span> <span class="o">=</span> <span class="n">SystemState</span><span class="p">(</span>
+            <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+            <span class="n">time</span><span class="o">=</span><span class="n">end_time</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">(</span><span class="n">end_time</span><span class="p">),</span>
+            <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">(</span><span class="n">end_time</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Determine the list of active events</span>
+        <span class="n">active_events</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_active_events</span><span class="p">(</span><span class="n">start_state</span><span class="p">,</span> <span class="n">end_state</span><span class="p">)</span>
+
+        <span class="c1"># For each of the active events, localize the zero-crossing</span>
+        <span class="n">locations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">active_events</span><span class="p">:</span>
+            <span class="n">event_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_event_time</span><span class="p">(</span>
+                <span class="n">event</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span>
+            <span class="p">)</span>
+            <span class="n">locations</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">event_time</span><span class="p">,</span> <span class="n">event</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">locations</span>
+
+    <span class="k">def</span> <span class="nf">_get_active_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_state</span><span class="p">,</span> <span class="n">end_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine which events are active in the given time frame.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            start_state: The state at the beginning of the time frame.</span>
+<span class="sd">            end_state: The state at the end of the time frame.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            List of events that have occurred in the given time frame.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">event</span><span class="p">(</span><span class="n">start_state</span><span class="p">)</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">])</span>
+        <span class="n">end_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">event</span><span class="p">(</span><span class="n">end_state</span><span class="p">)</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">])</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">_find_active_events</span><span class="p">(</span>
+            <span class="n">start_values</span><span class="p">,</span>
+            <span class="n">end_values</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_tolerances</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_directions</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">event</span> <span class="k">for</span> <span class="n">event</span><span class="p">,</span> <span class="n">flag</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">,</span> <span class="n">mask</span><span class="p">)</span> <span class="k">if</span> <span class="n">flag</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_find_event_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find the time when the sign change occurs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            start_time: The start time of the time frame.</span>
+<span class="sd">            end_time: The end time of the time_frame.</span>
+<span class="sd">            state:</span>
+<span class="sd">                A callable, with `state(t)` being the state vector at time `t`</span>
+<span class="sd">                for any scalar or one-dimensional array `t` with</span>
+<span class="sd">                `start_time &lt;= t &lt;= end_time`.</span>
+<span class="sd">            inputs:</span>
+<span class="sd">                A callable, with `state(t)` being the input vector at time `t`</span>
+<span class="sd">                for any scalar or one-dimensional array `t` with</span>
+<span class="sd">                `start_time &lt;= t &lt;= end_time`.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            A time at or after the sign change occurs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">assert</span> <span class="n">start_time</span> <span class="o">&lt;=</span> <span class="n">end_time</span>
+
+        <span class="n">start_state</span> <span class="o">=</span> <span class="n">SystemState</span><span class="p">(</span>
+            <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+            <span class="n">time</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">(</span><span class="n">start_time</span><span class="p">),</span>
+            <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">(</span><span class="n">start_time</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">end_state</span> <span class="o">=</span> <span class="n">SystemState</span><span class="p">(</span>
+            <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+            <span class="n">time</span><span class="o">=</span><span class="n">end_time</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">(</span><span class="n">end_time</span><span class="p">),</span>
+            <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">(</span><span class="n">end_time</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">start_value</span> <span class="o">=</span> <span class="n">event</span><span class="p">(</span><span class="n">start_state</span><span class="p">)</span>
+        <span class="n">end_value</span> <span class="o">=</span> <span class="n">event</span><span class="p">(</span><span class="n">end_state</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">start_value</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">event</span><span class="o">.</span><span class="n">tolerance</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="n">end_value</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">event</span><span class="o">.</span><span class="n">tolerance</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="n">event</span><span class="o">.</span><span class="n">tolerance</span> <span class="o">&lt;</span> <span class="n">start_value</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">tolerance</span> <span class="o">&lt;</span> <span class="n">end_value</span><span class="p">))</span>
+
+        <span class="n">iter_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">time_diff</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="k">while</span> <span class="n">iter_count</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxiter</span> <span class="ow">and</span> <span class="n">time_diff</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">xtol</span><span class="p">:</span>
+            <span class="n">time_diff</span> <span class="o">/=</span> <span class="mi">2</span>
+            <span class="n">mid_time</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="n">time_diff</span>
+            <span class="n">mid_state</span> <span class="o">=</span> <span class="n">SystemState</span><span class="p">(</span>
+                <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                <span class="n">time</span><span class="o">=</span><span class="n">mid_time</span><span class="p">,</span>
+                <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">(</span><span class="n">mid_time</span><span class="p">),</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">(</span><span class="n">mid_time</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">mid_value</span> <span class="o">=</span> <span class="n">event</span><span class="p">(</span><span class="n">mid_state</span><span class="p">)</span>
+            <span class="n">mid_value</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">mid_value</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">event</span><span class="o">.</span><span class="n">tolerance</span> <span class="k">else</span> <span class="n">mid_value</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">mid_value</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">start_value</span><span class="p">):</span>
+                <span class="c1"># The sign change happens after mid_time</span>
+                <span class="n">start_time</span> <span class="o">=</span> <span class="n">mid_time</span>
+            <span class="n">iter_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">start_time</span>
+
+
+<span class="k">class</span> <span class="nc">_SystemStateUpdater</span><span class="p">(</span><span class="n">SystemState</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A ``_SystemStateUpdater`` is a system state in which the states can be</span>
+<span class="sd">    updated&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">system</span><span class="p">:</span> <span class="n">System</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+        <span class="c1"># Make a copy of the state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">set_state_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update the value of the given state&quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="n">state</span><span class="o">.</span><span class="n">state_slice</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;The dictionary access interface is deprecated&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="c1"># In case the key is a tuple, its first element is the object to</span>
+            <span class="c1"># access, and the remainder is the index of the element to address</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">obj</span><span class="p">(</span><span class="bp">self</span><span class="p">)[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">obj</span><span class="p">(</span><span class="bp">self</span><span class="p">)[</span><span class="n">idx</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Otherwise, we&#39;ll fall back to the set_value interface</span>
+            <span class="n">key</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_find_active_events</span><span class="p">(</span><span class="n">start_values</span><span class="p">,</span> <span class="n">end_values</span><span class="p">,</span> <span class="n">tolerances</span><span class="p">,</span> <span class="n">directions</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Determine the events for which a matching sign change has occurred</span>
+<span class="sd">    between the start- and the end-value.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An array of booleans, indicating for each event whether it has seen a</span>
+<span class="sd">        sign change or not.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">up</span> <span class="o">=</span> <span class="p">((</span><span class="n">start_values</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">tolerances</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">end_values</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="n">tolerances</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">start_values</span> <span class="o">&lt;=</span> <span class="n">tolerances</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">end_values</span> <span class="o">&gt;</span> <span class="n">tolerances</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">down</span> <span class="o">=</span> <span class="p">((</span><span class="n">start_values</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="n">tolerances</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">end_values</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">tolerances</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">start_values</span> <span class="o">&gt;</span> <span class="n">tolerances</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">end_values</span> <span class="o">&lt;=</span> <span class="n">tolerances</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">up</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">directions</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span><span class="n">down</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">directions</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">mask</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

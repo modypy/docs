@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modypy.model.evaluation &mdash; MoDyPy 1.0.1 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> MoDyPy
+            <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>modypy.model.evaluation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for modypy.model.evaluation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Provides the ``Evaluator`` class, which can be used to evaluate the individual</span>
+<span class="sd">aspects (signals, state derivatives, ...) at any given point in time.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">.system</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">.ports</span> <span class="kn">import</span> <span class="n">Port</span>
+<span class="kn">from</span> <span class="nn">.states</span> <span class="kn">import</span> <span class="n">State</span>
+
+
+<div class="viewcode-block" id="AlgebraicLoopError"><a class="viewcode-back" href="../../../api/packages/model/evaluation.html#modypy.model.evaluation.AlgebraicLoopError">[docs]</a><span class="k">class</span> <span class="nc">AlgebraicLoopError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Exception raised when an algebraic loop is encountered&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="PortNotConnectedError"><a class="viewcode-back" href="../../../api/packages/model/evaluation.html#modypy.model.evaluation.PortNotConnectedError">[docs]</a><span class="k">class</span> <span class="nc">PortNotConnectedError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Exception raised when requesting the value of a port that is not connected</span>
+<span class="sd">    to any signal&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="Evaluator"><a class="viewcode-back" href="../../../api/packages/model/evaluation.html#modypy.model.evaluation.Evaluator">[docs]</a><span class="k">class</span> <span class="nc">Evaluator</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class allows to evaluate the individual aspects (signals, state</span>
+<span class="sd">    derivatives, ...) of a system at any given time.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">system</span><span class="p">:</span> <span class="n">System</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">system</span> <span class="o">=</span> <span class="n">system</span>
+
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">initial_condition</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">state</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_derivative</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_state_derivatives</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_signals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">num_signals</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_signals</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signal_evaluation_stack</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signal_evaluation_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">num_events</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_event_values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">signal</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">inputs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_signals</span><span class="p">[</span><span class="n">signal</span><span class="o">.</span><span class="n">signal_slice</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">signal</span><span class="o">.</span><span class="n">input_slice</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">valid_signals</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The current state&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state_derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The state derivative vector for the complete system&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">state_instance</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+            <span class="c1"># Trigger calculation of the derivative</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_state_derivative</span><span class="p">(</span><span class="n">state_instance</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_derivative</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The input vector for the complete system&quot;&quot;&quot;</span>
+        <span class="n">input_vector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_inputs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">signal</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">inputs</span><span class="p">:</span>
+            <span class="n">signal_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_port_value</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+            <span class="n">input_vector</span><span class="p">[</span><span class="n">signal</span><span class="o">.</span><span class="n">input_slice</span><span class="p">]</span> <span class="o">=</span> <span class="n">signal_value</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">input_vector</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">signals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The signal vector for the complete system.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">signal_instance</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">signals</span><span class="p">:</span>
+            <span class="c1"># Trigger calculation of the signal</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_port_value</span><span class="p">(</span><span class="n">signal_instance</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_signals</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The output vector for the complete system&quot;&quot;&quot;</span>
+        <span class="n">output_vector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">outputs</span><span class="p">:</span>
+            <span class="n">port_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_port_value</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>
+            <span class="n">output_vector</span><span class="p">[</span><span class="n">port</span><span class="o">.</span><span class="n">output_slice</span><span class="p">]</span> <span class="o">=</span> <span class="n">port_value</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">output_vector</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">event_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The event vector for the complete system&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">event_instance</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
+            <span class="c1"># Trigger calculation of the event value</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_event_value</span><span class="p">(</span><span class="n">event_instance</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_values</span>
+
+<div class="viewcode-block" id="Evaluator.get_state_value"><a class="viewcode-back" href="../../../api/packages/model/evaluation.html#modypy.model.evaluation.Evaluator.get_state_value">[docs]</a>    <span class="k">def</span> <span class="nf">get_state_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determine the value of a given state.</span>
+
+<span class="sd">        :param state: The state</span>
+<span class="sd">        :return:  The value of the state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[</span><span class="n">state</span><span class="o">.</span><span class="n">state_slice</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Evaluator.get_port_value"><a class="viewcode-back" href="../../../api/packages/model/evaluation.html#modypy.model.evaluation.Evaluator.get_port_value">[docs]</a>    <span class="k">def</span> <span class="nf">get_port_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">:</span> <span class="n">Port</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determine the value of the given port.</span>
+
+<span class="sd">        If the value has not yet been calculated, it will be calculated before</span>
+<span class="sd">        this method returns. If an algebraic loop is encountered during</span>
+<span class="sd">        calculation, an ``AlgebraicLoopError`` will be raised.</span>
+
+<span class="sd">        :param port: The port for which the value shall be determined</span>
+<span class="sd">        :return: The value of the port</span>
+<span class="sd">        :raises AlgebraicLoopError: if an algebraic loop is encountered</span>
+<span class="sd">            while evaluating the value of the signal</span>
+<span class="sd">        :raises PortNotConnectedError: if the port is not connected to a signal</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">port</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># An empty port has no value</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">port</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">signal</span> <span class="o">=</span> <span class="n">port</span><span class="o">.</span><span class="n">signal</span>
+
+        <span class="k">if</span> <span class="n">signal</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># This port is not connected to any signal, so we cannot determine</span>
+            <span class="c1"># its value.</span>
+            <span class="k">raise</span> <span class="n">PortNotConnectedError</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">signal</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_signals</span><span class="p">:</span>
+            <span class="c1"># That signal was already evaluated, so just return the value in</span>
+            <span class="c1"># proper shape.</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_signals</span><span class="p">[</span><span class="n">signal</span><span class="o">.</span><span class="n">signal_slice</span><span class="p">]</span>\
+                <span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="c1"># The signal has not yet been evaluated, so we try to do that now</span>
+        <span class="k">if</span> <span class="n">signal</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_evaluation_set</span><span class="p">:</span>
+            <span class="c1"># The signal is currently being evaluated, but we got here again,</span>
+            <span class="c1"># so there must be an algebraic loop.</span>
+            <span class="k">raise</span> <span class="n">AlgebraicLoopError</span><span class="p">()</span>
+
+        <span class="c1"># Start evaluation of the signal</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signal_evaluation_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signal_evaluation_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+
+        <span class="c1"># Perform evaluation</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">DataProvider</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                            <span class="n">StateProvider</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+                            <span class="n">PortProvider</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
+            <span class="n">signal_value</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">signal_value</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">value</span>
+
+        <span class="c1"># Ensure that the signal has the correct shape</span>
+        <span class="n">signal_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">signal_value</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="c1"># Assign the value to the signal_vector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_signals</span><span class="p">[</span><span class="n">signal</span><span class="o">.</span><span class="n">signal_slice</span><span class="p">]</span> <span class="o">=</span> <span class="n">signal_value</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="c1"># Mark the signal as valid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_signals</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+
+        <span class="c1"># End evaluation of the signal</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signal_evaluation_set</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signal_evaluation_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="c1"># Return the value of the signal</span>
+        <span class="k">return</span> <span class="n">signal_value</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Evaluator.get_state_derivative"><a class="viewcode-back" href="../../../api/packages/model/evaluation.html#modypy.model.evaluation.Evaluator.get_state_derivative">[docs]</a>    <span class="k">def</span> <span class="nf">get_state_derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the state derivative of the given state.</span>
+
+<span class="sd">        :param state: The state for which the derivative shall be determined</span>
+<span class="sd">        :return: The state derivative</span>
+<span class="sd">        :raises AlgebraicLoopError: if an algebraic loop is encountered</span>
+<span class="sd">            while evaluating the derivative of the state instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_state_derivatives</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_derivative</span><span class="p">[</span><span class="n">state</span><span class="o">.</span><span class="n">state_slice</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">DataProvider</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                            <span class="n">StateProvider</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+                            <span class="n">PortProvider</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="n">state_derivative</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">derivative_function</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">state_derivative</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">state_derivative</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_derivative</span><span class="p">[</span><span class="n">state</span><span class="o">.</span><span class="n">state_slice</span><span class="p">]</span> <span class="o">=</span> <span class="n">state_derivative</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_state_derivatives</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state_derivative</span></div>
+
+<div class="viewcode-block" id="Evaluator.get_event_value"><a class="viewcode-back" href="../../../api/packages/model/evaluation.html#modypy.model.evaluation.Evaluator.get_event_value">[docs]</a>    <span class="k">def</span> <span class="nf">get_event_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the value of the event function of the given event</span>
+
+<span class="sd">        :param event: The event for which to calculate the value</span>
+<span class="sd">        :return: The value of the event function</span>
+<span class="sd">        :raises AlgebraicLoopError: if an algebraic loop is encountered</span>
+<span class="sd">            while evaluating the value of the event function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_event_values</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_values</span><span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">event_index</span><span class="p">]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">DataProvider</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                            <span class="n">StateProvider</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+                            <span class="n">PortProvider</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="n">event_value</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">event_function</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event_values</span><span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">event_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">event_value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_event_values</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">event_value</span></div></div>
+
+
+<div class="viewcode-block" id="DataProvider"><a class="viewcode-back" href="../../../api/packages/model/evaluation.html#modypy.model.evaluation.DataProvider">[docs]</a><span class="k">class</span> <span class="nc">DataProvider</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A ``DataProvider`` provides access to the data about the current point in</span>
+<span class="sd">    time in the simulation. It has the following properties:</span>
+
+<span class="sd">    ``time``</span>
+<span class="sd">        The current time</span>
+<span class="sd">    ``states``</span>
+<span class="sd">        The contents of the current states, accessed by indexing using the</span>
+<span class="sd">        ``State`` objects.</span>
+<span class="sd">    ``inputs``</span>
+<span class="sd">        The contents of the current inputs, accessed by indexing using the</span>
+<span class="sd">        ``Port`` objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">states</span> <span class="o">=</span> <span class="n">states</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span></div>
+
+
+<div class="viewcode-block" id="StateProvider"><a class="viewcode-back" href="../../../api/packages/model/evaluation.html#modypy.model.evaluation.StateProvider">[docs]</a><span class="k">class</span> <span class="nc">StateProvider</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A ``StateProvider`` provides access to the state via indexing using the</span>
+<span class="sd">    ``State`` objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evaluator</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span> <span class="o">=</span> <span class="n">evaluator</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">get_state_value</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PortProvider"><a class="viewcode-back" href="../../../api/packages/model/evaluation.html#modypy.model.evaluation.PortProvider">[docs]</a><span class="k">class</span> <span class="nc">PortProvider</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A ``PortProvider`` provides access to the signals via indexing using the</span>
+<span class="sd">    ``Port`` objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evaluator</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span> <span class="o">=</span> <span class="n">evaluator</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">get_port_value</span><span class="p">(</span><span class="n">port</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

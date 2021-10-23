@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi-Dimensional States: A Planet Orbit &mdash; MoDyPy 2.0.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Zero-Crossing Events: A Bouncing Ball" href="04_bouncing_ball.html" />
+    <link rel="prev" title="Multiple States: A Pendulum" href="02_pendulum.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> MoDyPy
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../guide.html">Programmer’s Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="01_integrator.html">Single States: A Simple Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_pendulum.html">Multiple States: A Pendulum</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Multi-Dimensional States: A Planet Orbit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_bouncing_ball.html">Zero-Crossing Events: A Bouncing Ball</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_dc_engine.html">Ports and Blocks: A DC-Motor with Propeller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_dc_engine_sampling.html">Discrete-Time: Sampling a DC-Engine</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_water_tank.html">Steady-State: A Water Tank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_linearization.html">Linearizing the Water Tank</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../guide.html">Programmer’s Guide</a> &raquo;</li>
+      <li>Multi-Dimensional States: A Planet Orbit</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/03_planet_orbit.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="multi-dimensional-states-a-planet-orbit">
+<h1>Multi-Dimensional States: A Planet Orbit<a class="headerlink" href="#multi-dimensional-states-a-planet-orbit" title="Permalink to this headline"></a></h1>
+<p>In this exercise we will model the system of a sun and a planet orbiting around
+it. We will model the two-dimensional position and velocity of the planet.
+After completing this exercise, you will know</p>
+<ul class="simple">
+<li><p>how to model systems with multi-dimensional states and</p></li>
+<li><p>how to specify integrator options.</p></li>
+</ul>
+<p>In <a class="reference internal" href="#planet-orbit"><span class="std std-numref">Fig. 5</span></a> you can see a schematic drawing of the sun and the
+orbiting planet together with the position and the velovity of the planet.</p>
+<figure class="align-center" id="id1">
+<span id="planet-orbit"></span><img alt="Sun and Planet" src="../_images/03_planet_orbit.svg" /><figcaption>
+<p><span class="caption-number">Fig. 5 </span><span class="caption-text">Sun and Planet with governing quantities</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>Thanks to Isaac Newton, we know that the gravitational force acting on the
+planet has the magnitude</p>
+<div class="math notranslate nohighlight">
+\[F = G \frac{m M}{r^2}\]</div>
+<p>where</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(M\)</span> is the mass of the sun,</p></li>
+<li><p><span class="math notranslate nohighlight">\(m\)</span> is the mass of the planet,</p></li>
+<li><p><span class="math notranslate nohighlight">\(r\)</span> is the distance of the planet from the sun, and</p></li>
+<li><p><span class="math notranslate nohighlight">\(G\)</span> is the gravitational constant, with a value of approximately
+<span class="math notranslate nohighlight">\(6.67\times 10^{-11} \frac{\text{m}^3}{\text{kg}\text{s}^2}\)</span>.</p></li>
+</ul>
+<p>Thus, the acceleration of the planet is given by:</p>
+<div class="math notranslate nohighlight">
+\[\frac{d}{dt} \vec{v}\left(t\right) =
+- G \frac{M}{\left|\vec{x}\left(t\right)\right|^2}
+\frac{\vec{x}\left(t\right)}{\left|\vec{x}\left(t\right)\right|}\]</div>
+<p>And again, we have the time-derivative of the position equal the velocity:</p>
+<div class="math notranslate nohighlight">
+\[\frac{d}{dt} \vec{x}\left(t\right) = \vec{v}\left(t\right)\]</div>
+<p>With the initial conditions <span class="math notranslate nohighlight">\(\vec{v}\left(t_0\right)=\vec{v}_0\)</span> and
+<span class="math notranslate nohighlight">\(\vec{x}\left(t_0\right)=\vec{x}_0\)</span> our system is defined. So now let us
+implement it.</p>
+<p>Again, we first import the required modules:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy.linalg</span> <span class="k">as</span> <span class="nn">linalg</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">modypy.model</span> <span class="kn">import</span> <span class="n">System</span><span class="p">,</span> <span class="n">State</span>
+<span class="kn">from</span> <span class="nn">modypy.simulation</span> <span class="kn">import</span> <span class="n">Simulator</span>
+</pre></div>
+</div>
+<p>We will need <code class="docutils literal notranslate"><span class="pre">numpy.linalg</span></code> to determine the norm of the position vector.</p>
+<p>Following that we will define the system parameters and the initial states:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define the system parameters</span>
+<span class="n">G</span> <span class="o">=</span> <span class="mf">6.67E-11</span><span class="o">*</span><span class="p">(</span><span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+<span class="n">SUN_MASS</span> <span class="o">=</span> <span class="mf">1.989E30</span>
+<span class="n">PLANET_ORBIT</span> <span class="o">=</span> <span class="mf">149.6E09</span>
+<span class="n">PLANET_ORBIT_TIME</span> <span class="o">=</span> <span class="mf">365.256</span>
+
+<span class="c1"># Define the initial state</span>
+<span class="n">PLANET_VELOCITY</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">PLANET_ORBIT</span> <span class="o">/</span> <span class="n">PLANET_ORBIT_TIME</span>
+<span class="n">X_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">PLANET_ORBIT</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">V_0</span> <span class="o">=</span> <span class="mf">0.9</span><span class="o">*</span><span class="n">PLANET_VELOCITY</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mi">20</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mi">20</span><span class="p">))]</span>
+</pre></div>
+</div>
+<p>Note that we have scaled up the times to days to make them a bit more manageable.</p>
+<p>Now let us define the system, its states and state derivatives:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the system</span>
+<span class="n">system</span> <span class="o">=</span> <span class="n">System</span><span class="p">()</span>
+
+
+<span class="c1"># Define the derivatives</span>
+<span class="k">def</span> <span class="nf">position_dt</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="n">velocity</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">velocity_dt</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="n">position</span><span class="p">]</span>
+    <span class="n">distance</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">G</span> <span class="o">*</span> <span class="n">SUN_MASS</span><span class="o">/</span><span class="p">(</span><span class="n">distance</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">pos</span>
+
+
+<span class="c1"># Create the states</span>
+<span class="n">position</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+                 <span class="n">shape</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                 <span class="n">derivative_function</span><span class="o">=</span><span class="n">position_dt</span><span class="p">,</span>
+                 <span class="n">initial_condition</span><span class="o">=</span><span class="n">X_0</span><span class="p">)</span>
+
+<span class="n">velocity</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+                 <span class="n">shape</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                 <span class="n">derivative_function</span><span class="o">=</span><span class="n">velocity_dt</span><span class="p">,</span>
+                 <span class="n">initial_condition</span><span class="o">=</span><span class="n">V_0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The main thing that changed from the previous examples is that now our states
+are two-dimensional. In that case, <code class="docutils literal notranslate"><span class="pre">modypy</span></code> will provide their values as
+actual <code class="docutils literal notranslate"><span class="pre">numpy</span></code> arrays or vectors in this case.</p>
+<p>Finally, let us set up a simulation, run it and plot the results:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run a simulation</span>
+<span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+                      <span class="n">start_time</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                      <span class="n">integrator_options</span><span class="o">=</span><span class="p">{</span>
+                          <span class="s1">&#39;rtol&#39;</span><span class="p">:</span> <span class="mf">1E-6</span>
+                      <span class="p">})</span>
+<span class="n">msg</span> <span class="o">=</span> <span class="n">simulator</span><span class="o">.</span><span class="n">run_until</span><span class="p">(</span><span class="n">time_boundary</span><span class="o">=</span><span class="n">PLANET_ORBIT_TIME</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Simulation failed with message &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">msg</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="c1"># Plot the result</span>
+    <span class="n">trajectory</span> <span class="o">=</span> <span class="n">simulator</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">state</span><span class="p">[:,</span> <span class="n">position</span><span class="o">.</span><span class="n">state_slice</span><span class="p">]</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">trajectory</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">trajectory</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Planet Orbit&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;03_planet_orbit_simulation.png&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This time, we do not plot the values of the states over time, but instead we
+plot the trajectory. The result can be seen in <a class="reference internal" href="#planet-orbit-simulation"><span class="std std-numref">Fig. 6</span></a>.</p>
+<p>Note the additional parameter <code class="docutils literal notranslate"><span class="pre">integrator_options</span></code> to the
+<a class="reference internal" href="../api/packages/simulation.html#modypy.simulation.Simulator" title="modypy.simulation.Simulator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Simulator</span></code></a> constructor. It is a dictionary
+of options which are to be passed to the constructor of the integrator being used.
+The <code class="docutils literal notranslate"><span class="pre">rtol</span></code> parameter increases the relative tolerance of the integration result
+to reduce the time til the simulator is done. For the planetary orbit, we do not
+need sub-meter resolution. The value of <code class="docutils literal notranslate"><span class="pre">rtol</span></code> given here still allows us to
+calculate the orbit positions and velocities to around 1,000 km or 1,000 km/d
+accuracy.</p>
+<figure class="align-center" id="id2">
+<span id="planet-orbit-simulation"></span><img alt="Results of planet orbit simulation" src="../_images/03_planet_orbit_simulation.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 6 </span><span class="caption-text">Results of planet orbit simulation</span><a class="headerlink" href="#id2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>If you want, you can now play around a bit with the initial state or any of the
+other parameters.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="02_pendulum.html" class="btn btn-neutral float-left" title="Multiple States: A Pendulum" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="04_bouncing_ball.html" class="btn btn-neutral float-right" title="Zero-Crossing Events: A Bouncing Ball" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

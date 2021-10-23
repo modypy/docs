@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modypy.blocks.linear: Linear Blocks &mdash; MoDyPy 3.0.0+0.gd993396.dirty documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="modypy.blocks.rigid: Rigid Body Motion" href="rigid.html" />
+    <link rel="prev" title="modypy.blocks.elmech: Electromechanial Blocks" href="elmech.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> MoDyPy
+            <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide.html">User’s Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../model.html">The Model API</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../blocks.html">The Blocks Library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="aerodyn.html"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.aerodyn</span></code>: Aerodynamic Blocks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discont.html"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.discont</span></code>: Discontinuities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete.html"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.discrete</span></code>: Utilities for Discrete-Time Systems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="elmech.html"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.elmech</span></code>: Electromechanial Blocks</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.linear</span></code>: Linear Blocks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rigid.html"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.rigid</span></code>: Rigid Body Motion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sources.html"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.sources</span></code>: Signal Sources</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../simulation.html">Simulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../steady_state.html">Steady-State Determination</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../linearization.html">Linearization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../utils.html">The Utilities Module</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../api.html">API Documentation</a> &raquo;</li>
+          <li><a href="../../blocks.html">The Blocks Library</a> &raquo;</li>
+      <li><code class="docutils literal notranslate"><span class="pre">modypy.blocks.linear</span></code>: Linear Blocks</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/api/packages/blocks/linear.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-modypy.blocks.linear">
+<span id="modypy-blocks-linear-linear-blocks"></span><h1><code class="docutils literal notranslate"><span class="pre">modypy.blocks.linear</span></code>: Linear Blocks<a class="headerlink" href="#module-modypy.blocks.linear" title="Permalink to this headline"></a></h1>
+<p>Blocks for linear, time-invariant systems</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="modypy.blocks.linear.Gain">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.blocks.linear.</span></span><span class="sig-name descname"><span class="pre">Gain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/blocks/linear.html#Gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.blocks.linear.Gain" title="Permalink to this definition"></a></dt>
+<dd><p>A simple linear gain block.</p>
+<p>Provides the input scaled by the constant gain as output.</p>
+<p>This class is deprecated. Use <code class="docutils literal notranslate"><span class="pre">gain</span></code> instead.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="modypy.blocks.linear.Gain.output_function">
+<span class="sig-name descname"><span class="pre">output_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/blocks/linear.html#Gain.output_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.blocks.linear.Gain.output_function" title="Permalink to this definition"></a></dt>
+<dd><p>Calculates the output for the system</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> – The current time, states and signals for the system.</p>
+</dd>
+</dl>
+<p>Returns: The input multiplied by the gain</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="modypy.blocks.linear.InvalidLTIException">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.blocks.linear.</span></span><span class="sig-name descname"><span class="pre">InvalidLTIException</span></span><a class="reference internal" href="../../../_modules/modypy/blocks/linear.html#InvalidLTIException"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.blocks.linear.InvalidLTIException" title="Permalink to this definition"></a></dt>
+<dd><p>An exception which is raised when the specification of an LTI is
+invalid.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="modypy.blocks.linear.LTISystem">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.blocks.linear.</span></span><span class="sig-name descname"><span class="pre">LTISystem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feed_through_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/blocks/linear.html#LTISystem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.blocks.linear.LTISystem" title="Permalink to this definition"></a></dt>
+<dd><p>Implementation of a linear, time-invariant block of the following format:</p>
+<blockquote>
+<div><p>dx/dt = system_matrix * x +        input_matrix * u
+y     = output_matrix * x + feed_through_matrix * u</p>
+</div></blockquote>
+<p>The matrices <code class="docutils literal notranslate"><span class="pre">system_matrix</span></code>, <code class="docutils literal notranslate"><span class="pre">input_matrix</span></code>, <code class="docutils literal notranslate"><span class="pre">output_matrix</span></code> and
+<code class="docutils literal notranslate"><span class="pre">feed_through_matrix</span></code> define the state and output behaviour of the block.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="modypy.blocks.linear.LTISystem.output_function">
+<span class="sig-name descname"><span class="pre">output_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/blocks/linear.html#LTISystem.output_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.blocks.linear.LTISystem.output_function" title="Permalink to this definition"></a></dt>
+<dd><p>Calculates the output for the system</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modypy.blocks.linear.LTISystem.state_derivative">
+<span class="sig-name descname"><span class="pre">state_derivative</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/blocks/linear.html#LTISystem.state_derivative"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.blocks.linear.LTISystem.state_derivative" title="Permalink to this definition"></a></dt>
+<dd><p>Calculates the state derivative for the system</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="modypy.blocks.linear.Sum">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.blocks.linear.</span></span><span class="sig-name descname"><span class="pre">Sum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/blocks/linear.html#Sum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.blocks.linear.Sum" title="Permalink to this definition"></a></dt>
+<dd><p>A linear weighted sum block.</p>
+<p>This block may have a number of inputs which are interpreted as vectors of
+common dimension. The output of the block is calculated as the weighted
+sum of the inputs.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">channel_weights</span></code> give the factors by which the individual channels
+are weighted in the sum.</p>
+<p>This class is deprecated. Use <code class="docutils literal notranslate"><span class="pre">sum_signal</span></code> instead.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="modypy.blocks.linear.Sum.output_function">
+<span class="sig-name descname"><span class="pre">output_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/blocks/linear.html#Sum.output_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.blocks.linear.Sum.output_function" title="Permalink to this definition"></a></dt>
+<dd><p>Calculates the output for the system</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> – The time, states and signals of the system</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The sum of the input signals</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modypy.blocks.linear.gain">
+<span class="sig-prename descclassname"><span class="pre">modypy.blocks.linear.</span></span><span class="sig-name descname"><span class="pre">gain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gain_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_signal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/blocks/linear.html#gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.blocks.linear.gain" title="Permalink to this definition"></a></dt>
+<dd><p>Create a signal that represents the product of the given gain matrix and the
+value of the given input signal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gain_matrix</strong> – The gain matrix</p></li>
+<li><p><strong>input_signal</strong> – The input signal to consider</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A signal that represents the product of the gain matrix and the value of
+the input signal.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modypy.blocks.linear.integrator">
+<span class="sig-prename descclassname"><span class="pre">modypy.blocks.linear.</span></span><span class="sig-name descname"><span class="pre">integrator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/blocks/linear.html#integrator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.blocks.linear.integrator" title="Permalink to this definition"></a></dt>
+<dd><p>Create a state that provides the integrated value of the input
+callable.</p>
+<p>The resulting signal will have the same shape as the input callable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>owner</strong> – The owner of the integrator</p></li>
+<li><p><strong>input_signal</strong> – A callable accepting an object implementing the system
+object access protocol and providing the value of the derivative</p></li>
+<li><p><strong>initial_condition</strong> – The initial condition of the integrator
+(default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A state that provides the integrated value of the input signal</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modypy.blocks.linear.sum_signal">
+<span class="sig-prename descclassname"><span class="pre">modypy.blocks.linear.</span></span><span class="sig-name descname"><span class="pre">sum_signal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_signals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gains</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/blocks/linear.html#sum_signal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.blocks.linear.sum_signal" title="Permalink to this definition"></a></dt>
+<dd><p>Create a signal that represents the sum of the input signals multiplied by
+the given gains.</p>
+<p>The signals must have the same shape and there must be exactly as many
+entries in the <code class="docutils literal notranslate"><span class="pre">gains</span></code> tuple as there are input signals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_signals</strong> – A tuple of input signals</p></li>
+<li><p><strong>gains</strong> – A tuple of gains for the input signals. Optional: Default value
+is all ones.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A signal that represents the sum of the input signals</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="elmech.html" class="btn btn-neutral float-left" title="modypy.blocks.elmech: Electromechanial Blocks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rigid.html" class="btn btn-neutral float-right" title="modypy.blocks.rigid: Rigid Body Motion" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

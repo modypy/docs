@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modypy.model.states &mdash; MoDyPy 2.0.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> MoDyPy
+            <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide.html">Programmer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>modypy.model.states</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for modypy.model.states</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">States represent the memory of a dynamical system. In MoDyPy, states are always</span>
+<span class="sd">real-valued, and may be multi-dimensional.</span>
+
+<span class="sd">For each state, a derivative function may be defined which describes the</span>
+<span class="sd">evolution of the value of the state over time. The value of that derivative</span>
+<span class="sd">function may depend on the value of any system state or signal, which are made</span>
+<span class="sd">accessible by the :class:`DataProvider &lt;modypy.model.evaluation.DataProvider&gt;`</span>
+<span class="sd">object passed to it.</span>
+
+<span class="sd">States may also be updated by :mod:`event listeners &lt;modypy.model.events&gt;`.</span>
+
+<span class="sd">States are represented as instances of the :class:`State` class. In addition,</span>
+<span class="sd">:class:`SignalState` instances are states that are also signals.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">modypy.model</span> <span class="kn">import</span> <span class="n">Signal</span>
+
+
+<div class="viewcode-block" id="State"><a class="viewcode-back" href="../../../api/packages/model/states.html#modypy.model.states.State">[docs]</a><span class="k">class</span> <span class="nc">State</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A state describes a portion of the state of a block.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        owner: The owner of the state</span>
+<span class="sd">        derivative_function: The derivative function of the state</span>
+<span class="sd">            (Default: 0)</span>
+<span class="sd">        shape: The shape of the state (Default: 1)</span>
+<span class="sd">        initial_condition: The initial value of the state (Default: 0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">owner</span><span class="p">,</span>
+                 <span class="n">derivative_function</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">shape</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">initial_condition</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owner</span> <span class="o">=</span> <span class="n">owner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">derivative_function</span> <span class="o">=</span> <span class="n">derivative_function</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">shape</span><span class="p">,)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span>
+        <span class="k">if</span> <span class="n">initial_condition</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initial_condition</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initial_condition</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">initial_condition</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">allocate_state_lines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A slice object that represents the indices of this state in the</span>
+<span class="sd">        states vector.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_index</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">state_index</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state_range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A range object that represents the indices of this state in the</span>
+<span class="sd">        states vector.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_index</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">state_index</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SignalState"><a class="viewcode-back" href="../../../api/packages/model/states.html#modypy.model.states.SignalState">[docs]</a><span class="k">class</span> <span class="nc">SignalState</span><span class="p">(</span><span class="n">State</span><span class="p">,</span> <span class="n">Signal</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A state that also provides itself as an output signal.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">owner</span><span class="p">,</span>
+                 <span class="n">derivative_function</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">shape</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">initial_condition</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">State</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                       <span class="n">owner</span><span class="p">,</span>
+                       <span class="n">derivative_function</span><span class="p">,</span>
+                       <span class="n">shape</span><span class="p">,</span>
+                       <span class="n">initial_condition</span><span class="p">)</span>
+        <span class="n">Signal</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_function</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SignalState.output_function"><a class="viewcode-back" href="../../../api/packages/model/states.html#modypy.model.states.SignalState.output_function">[docs]</a>    <span class="k">def</span> <span class="nf">output_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The output function that returns the state&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

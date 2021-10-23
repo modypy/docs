@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Blocks Library &mdash; MoDyPy v2.1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="modypy.blocks.aerodyn: Aerodynamic Blocks" href="packages/blocks/aerodyn.html" />
+    <link rel="prev" title="modpy.model.system: Systems and Blocks" href="packages/model/system.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> MoDyPy
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guide.html">User’s Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="model.html">The Model API</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">The Blocks Library</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="packages/blocks/aerodyn.html"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.aerodyn</span></code>: Aerodynamic Blocks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="packages/blocks/discont.html"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.discont</span></code>: Discontinuities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="packages/blocks/discrete.html"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.discrete</span></code>: Utilities for Discrete-Time Systems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="packages/blocks/elmech.html"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.elmech</span></code>: Electromechanial Blocks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="packages/blocks/linear.html"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.linear</span></code>: Linear Blocks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="packages/blocks/rigid.html"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.rigid</span></code>: Rigid Body Motion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="packages/blocks/sources.html"><code class="docutils literal notranslate"><span class="pre">modypy.blocks.sources</span></code>: Signal Sources</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="packages/simulation.html">Simulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/steady_state.html">Steady-State Determination</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages/linearization.html">Linearization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">The Utilities Module</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="api.html">API Documentation</a> &raquo;</li>
+      <li>The Blocks Library</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/blocks.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="the-blocks-library">
+<h1>The Blocks Library<a class="headerlink" href="#the-blocks-library" title="Permalink to this headline"></a></h1>
+<p>The Blocks Library provides re-usable system elements:</p>
+<dl class="simple">
+<dt>Sources (<a class="reference internal" href="packages/blocks/sources.html#module-modypy.blocks.sources" title="modypy.blocks.sources"><code class="xref py py-mod docutils literal notranslate"><span class="pre">modypy.blocks.sources</span></code></a>)</dt><dd><p>are blocks and signals that provide possibly time-dependent input data.
+A specific variant is the (<a class="reference internal" href="packages/blocks/sources.html#modypy.blocks.sources.constant" title="modypy.blocks.sources.constant"><code class="xref py py-mod docutils literal notranslate"><span class="pre">modypy.blocks.sources.constant</span></code></a>) signal,
+which provides a constant value.</p>
+</dd>
+<dt>Linear blocks (<a class="reference internal" href="packages/blocks/linear.html#module-modypy.blocks.linear" title="modypy.blocks.linear"><code class="xref py py-mod docutils literal notranslate"><span class="pre">modypy.blocks.linear</span></code></a>)</dt><dd><p>provide building-blocks for linear systems, such as the
+<a class="reference internal" href="packages/blocks/linear.html#modypy.blocks.linear.LTISystem" title="modypy.blocks.linear.LTISystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">modypy.blocks.linear.LTISystem</span></code></a> class for linear time-invariant
+systems in the typical state-space formulation.</p>
+</dd>
+<dt>Discrete-Time blocks (<a class="reference internal" href="packages/blocks/discrete.html#module-modypy.blocks.discrete" title="modypy.blocks.discrete"><code class="xref py py-mod docutils literal notranslate"><span class="pre">modypy.blocks.discrete</span></code></a>)</dt><dd><p>are special blocks for use in discrete-time or mixed systems.</p>
+</dd>
+<dt>Discontuity blocks (<a class="reference internal" href="packages/blocks/discont.html#module-modypy.blocks.discont" title="modypy.blocks.discont"><code class="xref py py-mod docutils literal notranslate"><span class="pre">modypy.blocks.discont</span></code></a>)</dt><dd><p>are blocks that implement discontinuities.</p>
+</dd>
+<dt>Electro-mechanical blocks (<a class="reference internal" href="packages/blocks/elmech.html#module-modypy.blocks.elmech" title="modypy.blocks.elmech"><code class="xref py py-mod docutils literal notranslate"><span class="pre">modypy.blocks.elmech</span></code></a>)</dt><dd><p>are useful for modelling electro-mechanical systems. The main constituent of
+this module currently is the <a class="reference internal" href="packages/blocks/elmech.html#modypy.blocks.elmech.DCMotor" title="modypy.blocks.elmech.DCMotor"><code class="xref py py-class docutils literal notranslate"><span class="pre">modypy.blocks.elmech.DCMotor</span></code></a> class for
+modelling DC-motors.</p>
+</dd>
+<dt>Aerodynamic blocks (<a class="reference internal" href="packages/blocks/aerodyn.html#module-modypy.blocks.aerodyn" title="modypy.blocks.aerodyn"><code class="xref py py-mod docutils literal notranslate"><span class="pre">modypy.blocks.aerodyn</span></code></a>)</dt><dd><p>are blocks and signals for aerodynamic modelling. Most prominent is the
+<a class="reference internal" href="packages/blocks/aerodyn.html#modypy.blocks.aerodyn.Propeller" title="modypy.blocks.aerodyn.Propeller"><code class="xref py py-class docutils literal notranslate"><span class="pre">modypy.blocks.aerodyn.Propeller</span></code></a> class for modelling a propeller in
+static configuration, and the <code class="xref py py-class docutils literal notranslate"><span class="pre">modpyp.blocks.aerodyn.Thruster</span></code> class
+to model a directional thruster with thrust and torque.</p>
+</dd>
+<dt>Rigid-body motion blocks (<a class="reference internal" href="packages/blocks/rigid.html#module-modypy.blocks.rigid" title="modypy.blocks.rigid"><code class="xref py py-mod docutils literal notranslate"><span class="pre">modypy.blocks.rigid</span></code></a>)</dt><dd><p>allow modelling the translational and rotational motion of rigid bodies.</p>
+</dd>
+</dl>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="packages/model/system.html" class="btn btn-neutral float-left" title="modpy.model.system: Systems and Blocks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="packages/blocks/aerodyn.html" class="btn btn-neutral float-right" title="modypy.blocks.aerodyn: Aerodynamic Blocks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

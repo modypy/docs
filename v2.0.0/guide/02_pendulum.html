@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multiple States: A Pendulum &mdash; MoDyPy 2.0.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Multi-Dimensional States: A Planet Orbit" href="03_planet_orbit.html" />
+    <link rel="prev" title="Single States: A Simple Integrator" href="01_integrator.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> MoDyPy
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../guide.html">Programmer’s Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="01_integrator.html">Single States: A Simple Integrator</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Multiple States: A Pendulum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_planet_orbit.html">Multi-Dimensional States: A Planet Orbit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_bouncing_ball.html">Zero-Crossing Events: A Bouncing Ball</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_dc_engine.html">Ports and Blocks: A DC-Motor with Propeller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_dc_engine_sampling.html">Discrete-Time: Sampling a DC-Engine</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_water_tank.html">Steady-State: A Water Tank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_linearization.html">Linearizing the Water Tank</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../guide.html">Programmer’s Guide</a> &raquo;</li>
+      <li>Multiple States: A Pendulum</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/02_pendulum.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="multiple-states-a-pendulum">
+<h1>Multiple States: A Pendulum<a class="headerlink" href="#multiple-states-a-pendulum" title="Permalink to this headline"></a></h1>
+<p>In this exercise we will model a simple pendulum: A mass suspended by a stiff
+connector from a fixed support. We will model the angle and angular velocity of
+the pendulum as states and let the pendulum move from some initial position.
+At the end of this exercise, you will know how to model such a pendulum and by
+that will learn how to work with multiple states.</p>
+<p>In <a class="reference internal" href="#pendulum"><span class="std std-numref">Fig. 3</span></a> you can see a schematic drawing of a pendulum just like
+the one we are going to model. We will not consider drag.</p>
+<figure class="align-center" id="id1">
+<span id="pendulum"></span><img alt="Pendulum with quantities" src="../_images/02_pendulum.svg" /><figcaption>
+<p><span class="caption-number">Fig. 3 </span><span class="caption-text">Pendulum with mass, length, angle and gravitational force marked</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>Our pendulum has two states:</p>
+<ul class="simple">
+<li><p>the current angle <span class="math notranslate nohighlight">\(\alpha\left(t\right)\)</span> and</p></li>
+<li><p>the current angular velocity <span class="math notranslate nohighlight">\(\omega\left(t\right)\)</span>.</p></li>
+</ul>
+<p>Newtonian mechanics tells us that</p>
+<div class="math notranslate nohighlight">
+\[\frac{d}{dt} \omega\left(t\right) =
+- \frac{g \sin\left(\alpha\left(t\right)\right)}{l}\]</div>
+<p>Our additional equation for the state <span class="math notranslate nohighlight">\(\alpha\left(t\right)\)</span> comes from
+the relationship between position and velocity:</p>
+<div class="math notranslate nohighlight">
+\[\frac{d}{dt} \alpha\left(t\right) = \omega\left(t\right)\]</div>
+<p>In addition, we have our initial conditions for both of the states:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\alpha\left(t_0\right) &amp; = \alpha_0 \\
+\omega\left(t_0\right) &amp;= \omega_0\end{split}\]</div>
+<p>We will now implement the system described by these equations. Again we start
+by importing all necessary definitions. In addition, we will define some
+constants for our system:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">modypy.model</span> <span class="kn">import</span> <span class="n">System</span><span class="p">,</span> <span class="n">State</span>
+<span class="kn">from</span> <span class="nn">modypy.simulation</span> <span class="kn">import</span> <span class="n">Simulator</span>
+
+<span class="c1"># Define the system parameters</span>
+<span class="n">LENGTH</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">GRAVITY</span> <span class="o">=</span> <span class="mf">9.81</span>
+
+<span class="c1"># Define the initial conditions</span>
+<span class="n">ALPHA_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">OMEGA_0</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<p>Now let us define our system and our two states:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the system</span>
+<span class="n">system</span> <span class="o">=</span> <span class="n">System</span><span class="p">()</span>
+
+<span class="c1"># Define the derivatives of the states</span>
+<span class="k">def</span> <span class="nf">alpha_dt</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="n">omega</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">omega_dt</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">GRAVITY</span><span class="o">/</span><span class="n">LENGTH</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="n">alpha</span><span class="p">])</span>
+    <span class="k">pass</span>
+
+
+<span class="c1"># Create the alpha state</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+              <span class="n">derivative_function</span><span class="o">=</span><span class="n">alpha_dt</span><span class="p">,</span>
+              <span class="n">initial_condition</span><span class="o">=</span><span class="n">ALPHA_0</span><span class="p">)</span>
+
+<span class="c1"># Create the omega state</span>
+<span class="n">omega</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+              <span class="n">derivative_function</span><span class="o">=</span><span class="n">omega_dt</span><span class="p">,</span>
+              <span class="n">initial_condition</span><span class="o">=</span><span class="n">OMEGA_0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the previous example, our state derivative function for the integrator only
+depended on the input signal. Here, each of the derivative functions depend on
+the value of the respective other state and use the <code class="docutils literal notranslate"><span class="pre">data.states</span></code> dictionary
+to retrieve that value.</p>
+<p>Again, we set up a simulator and run the system for 10 seconds:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run a simulation</span>
+<span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">start_time</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">msg</span> <span class="o">=</span> <span class="n">simulator</span><span class="o">.</span><span class="n">run_until</span><span class="p">(</span><span class="n">time_boundary</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Simulation failed with message &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">msg</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="c1"># Plot the result</span>
+    <span class="n">alpha_line</span><span class="p">,</span> <span class="n">omega_line</span> <span class="o">=</span> \
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simulator</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                 <span class="n">simulator</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">state</span><span class="p">[:,</span> <span class="n">alpha</span><span class="o">.</span><span class="n">state_slice</span><span class="p">],</span>
+                 <span class="s1">&#39;r&#39;</span><span class="p">,</span>
+                 <span class="n">simulator</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                 <span class="n">simulator</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">state</span><span class="p">[:,</span> <span class="n">omega</span><span class="o">.</span><span class="n">state_slice</span><span class="p">],</span>
+                 <span class="s1">&#39;g&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">((</span><span class="n">alpha_line</span><span class="p">,</span> <span class="n">omega_line</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Alpha&#39;</span><span class="p">,</span> <span class="s1">&#39;Omega&#39;</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;02_pendulum.png&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The result of that simulation can be seen in <a class="reference internal" href="#pendulum-simulation"><span class="std std-numref">Fig. 4</span></a>.</p>
+<figure class="align-center" id="id2">
+<span id="pendulum-simulation"></span><img alt="Results of pendulum simulation" src="../_images/02_pendulum_simulation.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 4 </span><span class="caption-text">Results of pendulum simulation: Angle and angular velocity</span><a class="headerlink" href="#id2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>If you want, you can now play around with the parameters gravity and length or
+the initial states. For example, you can give the pendulum some initial impulse
+by setting <code class="docutils literal notranslate"><span class="pre">OMEGA_0</span></code> to some value other than 0.</p>
+<p>As an additional exercise, try to integrate drag into the system, specified by
+the drag coefficient <span class="math notranslate nohighlight">\(\gamma\)</span> with <span class="math notranslate nohighlight">\(\gamma&gt;0\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\frac{d}{dt} \omega\left(t\right) =
+- \frac{g \sin\left(\alpha\left(t\right)\right)}{l}
+- \gamma \omega\left(t\right)\]</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="01_integrator.html" class="btn btn-neutral float-left" title="Single States: A Simple Integrator" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="03_planet_orbit.html" class="btn btn-neutral float-right" title="Multi-Dimensional States: A Planet Orbit" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

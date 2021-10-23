@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modypy.model.events &mdash; MoDyPy v2.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> MoDyPy
+            <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide.html">User’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>modypy.model.events</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for modypy.model.events</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Events are instances in time when some specific condition about the system</span>
+<span class="sd">changes. For example, clocks split the domain of the time variable into a</span>
+<span class="sd">possibly infinite sequence of continuous and disjoint intervals, each as long</span>
+<span class="sd">as a period of the clock. Whenever the continuous time variable leaves one of</span>
+<span class="sd">these intervals - and thereby enters the succeeding interval - a clock tick</span>
+<span class="sd">occurs.</span>
+
+<span class="sd">Similarly, zero-crossing events occur when the sign of a specific event function</span>
+<span class="sd">changes. That event function may depend on the time and on the value of signals</span>
+<span class="sd">and states.</span>
+
+<span class="sd">Listeners are special functions that may change the value of states in the</span>
+<span class="sd">system. They may be bound to events, meaning that they are executed whenever the</span>
+<span class="sd">respective event occurs. Note that any listener may be bound to multiple events.</span>
+
+<span class="sd">As each event may have multiple listeners bound to it, each occurrence of an</span>
+<span class="sd">event may lead to multiple listeners being executed. Similarly, multiple events</span>
+<span class="sd">may occur at any point in time, also possibly leading to multiple listeners</span>
+<span class="sd">being executed.</span>
+
+<span class="sd">The order of execution of listeners in this situation is undefined. Thus,</span>
+<span class="sd">model developers should make sure that listeners acting on the same parts of the</span>
+<span class="sd">state are confluent, i.e., that the final states resulting from different orders</span>
+<span class="sd">of execution of listeners are equivalent to each other. What is considered</span>
+<span class="sd">`equivalent` may depend on the application.</span>
+
+<span class="sd">Further, listeners may change the state in such a way that the sign of the</span>
+<span class="sd">event function of a zero-crossing event changes. Thus, one event may lead to the</span>
+<span class="sd">occurrence of another, and it is possible that a single event results in an</span>
+<span class="sd">endless event loop. Thus, event listeners need to be expressed carefully so that</span>
+<span class="sd">they do not trigger any unwanted events.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
+
+<span class="kn">from</span> <span class="nn">modypy.model.ports</span> <span class="kn">import</span> <span class="n">PortNotConnectedError</span>
+
+
+<div class="viewcode-block" id="MultipleEventSourcesError"><a class="viewcode-back" href="../../../api/packages/model/events.html#modypy.model.events.MultipleEventSourcesError">[docs]</a><span class="k">class</span> <span class="nc">MultipleEventSourcesError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An exception raised when two ports connected to different clocks</span>
+<span class="sd">    shall be connected to each other.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="EventPort"><a class="viewcode-back" href="../../../api/packages/model/events.html#modypy.model.events.EventPort">[docs]</a><span class="k">class</span> <span class="nc">EventPort</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;An event port is a port that can be connected to other event ports.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="EventPort.__init__"><a class="viewcode-back" href="../../../api/packages/model/events.html#modypy.model.events.EventPort.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owner</span> <span class="o">=</span> <span class="n">owner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">reference</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The event port that is referenced by connection to this event</span>
+<span class="sd">        port.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="o">.</span><span class="n">reference</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span>
+
+    <span class="nd">@reference</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_reference</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span> <span class="o">=</span> <span class="n">new_reference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">source</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The event source this port is connected to or ``None`` if it is</span>
+<span class="sd">        not connected to any event source&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="o">==</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">source</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">listeners</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The listeners registered on this event port&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="o">==</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">listeners</span>
+
+<div class="viewcode-block" id="EventPort.connect"><a class="viewcode-back" href="../../../api/packages/model/events.html#modypy.model.events.EventPort.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Connect an event port to another event port.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            other: The other event port</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            MultipleEventSourcesError: raised when two ports that are already</span>
+<span class="sd">                connected to two different sources shall be connected to each</span>
+<span class="sd">                other</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Both ports are already connected to an event.</span>
+            <span class="c1"># It is an error if it&#39;s not the same event.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">source</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">MultipleEventSourcesError</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># At least one of the ports is not yet connected to an event.</span>
+            <span class="c1"># We select a common reference and join all the listeners connected</span>
+            <span class="c1"># to both ports in one set.</span>
+            <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># The other port is already connected to an event,</span>
+                <span class="c1"># so we choose the other port as reference and add</span>
+                <span class="c1"># our listeners to its listeners.</span>
+                <span class="n">other</span><span class="o">.</span><span class="n">listeners</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">reference</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">reference</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># The other part is not yet connected to a event,</span>
+                <span class="c1"># so we make ourselves the reference and add</span>
+                <span class="c1"># its listeners to our listeners.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">listeners</span><span class="p">)</span>
+                <span class="n">other</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span></div>
+
+<div class="viewcode-block" id="EventPort.register_listener"><a class="viewcode-back" href="../../../api/packages/model/events.html#modypy.model.events.EventPort.register_listener">[docs]</a>    <span class="k">def</span> <span class="nf">register_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Register a listener for this event port.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          listener: The listener to register</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PortNotConnectedError</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">(</span><span class="n">provider</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AbstractEventSource"><a class="viewcode-back" href="../../../api/packages/model/events.html#modypy.model.events.AbstractEventSource">[docs]</a><span class="k">class</span> <span class="nc">AbstractEventSource</span><span class="p">(</span><span class="n">EventPort</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An event source defines the circumstances under which an event occurs.</span>
+<span class="sd">    Events are occurrences of special occurrence that may require a reaction.</span>
+
+<span class="sd">    Events can be reacted upon by updating the state of the system. For this</span>
+<span class="sd">    purpose, event listeners can be registered which are called upon occurrence</span>
+<span class="sd">    of the event.</span>
+
+<span class="sd">    ``AbstractEventSource`` is the abstract base class for all event sources.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">source</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;An event source always has itself as source&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="ZeroCrossEventSource"><a class="viewcode-back" href="../../../api/packages/model/events.html#modypy.model.events.ZeroCrossEventSource">[docs]</a><span class="k">class</span> <span class="nc">ZeroCrossEventSource</span><span class="p">(</span><span class="n">AbstractEventSource</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A ``ZeroCrossEventSource`` defines an event source by the change of sign</span>
+<span class="sd">    of a special event function. Such zero-cross events are specifically</span>
+<span class="sd">    monitored and the values of event functions are recorded by the simulator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ZeroCrossEventSource.__init__"><a class="viewcode-back" href="../../../api/packages/model/events.html#modypy.model.events.ZeroCrossEventSource.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">event_function</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1E-12</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a new zero-crossing event-source.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            owner: The system or block this event belongs to</span>
+<span class="sd">            event_function: The callable used to calculate the value of the</span>
+<span class="sd">                event function</span>
+<span class="sd">            direction: The direction of the sign change to consider</span>
+<span class="sd">                Possible values:</span>
+
+<span class="sd">                ``1``</span>
+<span class="sd">                    Consider only changes from negative to positive</span>
+
+<span class="sd">                ``-1``</span>
+<span class="sd">                    Consider only changes from positive to negative</span>
+
+<span class="sd">                ``0`` (default)</span>
+<span class="sd">                    Consider all changes</span>
+<span class="sd">            tolerance: The tolerance around zero</span>
+<span class="sd">                Values with an absolute value less than or equal to</span>
+<span class="sd">                ``tolerance`` are considered to be zero</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">AbstractEventSource</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_function</span> <span class="o">=</span> <span class="n">event_function</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">direction</span> <span class="o">=</span> <span class="n">direction</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">register_event</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span> <span class="o">=</span> <span class="n">tolerance</span></div>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_event_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Clock"><a class="viewcode-back" href="../../../api/packages/model/events.html#modypy.model.events.Clock">[docs]</a><span class="k">class</span> <span class="nc">Clock</span><span class="p">(</span><span class="n">AbstractEventSource</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A clock is an event source that generates a periodic event.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Clock.__init__"><a class="viewcode-back" href="../../../api/packages/model/events.html#modypy.model.events.Clock.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">owner</span><span class="p">,</span>
+                 <span class="n">period</span><span class="p">,</span>
+                 <span class="n">start_time</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                 <span class="n">end_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">run_before_start</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a clock.</span>
+
+<span class="sd">        The clock generates a periodic tick occurring at multiples of</span>
+<span class="sd">        ``period`` offset by ``start_time``. If ``end_time`` is set to</span>
+<span class="sd">        a value other than ``None``, no ticks will be generated after</span>
+<span class="sd">        ``end_time``. If ``run_before_start`` is set to ``True``, the</span>
+<span class="sd">        clock will also generate ticks before the time defined by</span>
+<span class="sd">        ``start_time``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            owner: The owner object of this clock (a system or a block)</span>
+<span class="sd">            period: The period of the clock</span>
+<span class="sd">            start_time: The start time of the clock (default: 0)</span>
+<span class="sd">            end_time: The end time of the clock (default: ``None``)</span>
+<span class="sd">            run_before_start: Flag indicating whether the clock shall already</span>
+<span class="sd">                run before the start time (default: ``False``)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">AbstractEventSource</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">=</span> <span class="n">period</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="n">start_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end_time</span> <span class="o">=</span> <span class="n">end_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_before_start</span> <span class="o">=</span> <span class="n">run_before_start</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">register_clock</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Clock.tick_generator"><a class="viewcode-back" href="../../../api/packages/model/events.html#modypy.model.events.Clock.tick_generator">[docs]</a>    <span class="k">def</span> <span class="nf">tick_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">not_before</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a generate that will yield the times of the ticks of</span>
+<span class="sd">        this clock.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          not_before: The ticks shown shall not be before the given time</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          A generator for ticks</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">k</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">((</span><span class="n">not_before</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_before_start</span><span class="p">:</span>
+            <span class="c1"># No ticks before the start</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">tick_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">tick_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_time</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">tick_time</span>
+            <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">tick_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

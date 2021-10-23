@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mathematical Basics &mdash; MoDyPy 1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Documentation" href="api/api.html" />
+    <link rel="prev" title="MoDyPy" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> MoDyPy
+            <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Mathematical Basics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/math.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mathematical-basics">
+<h1>Mathematical Basics<a class="headerlink" href="#mathematical-basics" title="Permalink to this headline"></a></h1>
+<p><a class="reference external" href="https://en.wikipedia.org/wiki/Dynamical_system">Dynamical systems</a> are systems
+which evolve over time. The evolution is usually described in terms of the
+internal state of said system as well as its input and output signals.
+These relationships are described by a mathematical formulation.</p>
+<p>MoDyPy deals with such dynamical systems in state-space representation.
+Specifically, dynamical systems in MoDyPy are modelled as continuous-time
+systems, using the following principal formulation:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\frac{d}{dt} \vec{x}\left(t\right) =
+    \vec{g}\left(t, \vec{x}\left(t\right), \vec{u}\left(t\right)\right) \\
+\vec{y}\left(t\right) =
+    \vec{h}\left(t, \vec{x}\left(t\right), \vec{u}\left(t\right)\right)\end{split}\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(\vec{x}\left(t\right)\)</span> is a vector that represents the <em>state</em> of
+the system at time <span class="math notranslate nohighlight">\(t\)</span> and <span class="math notranslate nohighlight">\(\vec{u}\left(t\right)\)</span> is a vector that
+represents the <em>inputs</em> to the system at that time.</p>
+<p>The <em>output</em> of the system is described by the function <span class="math notranslate nohighlight">\(\vec{h}\)</span>, which
+may depend on the time, the state and the input vector.
+Similarly, the function <span class="math notranslate nohighlight">\(\vec{g}\)</span> describes the derivative of the state
+with respect to time. That is, it describes how the state evolves with time.
+Again, it may also depend on the time, the state and the input vector.</p>
+<p>Systems may be classified according to a set of attributes, such as
+<em>time-dependency</em>, <em>linearity</em> or <em>autonomy</em>. In the following, a few important
+attributes for systems are given:</p>
+<dl class="simple">
+<dt>time-dependency</dt><dd><p>A system is said to be <em>time-independent</em> if both <span class="math notranslate nohighlight">\(\vec{g}\)</span> and
+<span class="math notranslate nohighlight">\(\vec{h}\)</span> are independent of the parameter <span class="math notranslate nohighlight">\(t\)</span>. A system that
+is not time-independent is said to be <em>time-dependent</em>.</p>
+</dd>
+<dt>linearity</dt><dd><p>A system is said to be <em>linear</em> if both <span class="math notranslate nohighlight">\(\vec{g}\)</span> and
+<span class="math notranslate nohighlight">\(\vec{h}\)</span> are linear in their parameters <span class="math notranslate nohighlight">\(\vec{x}\)</span> and
+<span class="math notranslate nohighlight">\(\vec{u}\)</span>. In that case, both functions can take a specific form
+which will be discussed further down. Systems that are not linear are called
+<em>non-linear</em>.</p>
+</dd>
+<dt>autonomy</dt><dd><p>A system is said to be <em>autonomous</em> if both <span class="math notranslate nohighlight">\(\vec{g}\)</span> and
+<span class="math notranslate nohighlight">\(\vec{h}\)</span> are independent of the input <span class="math notranslate nohighlight">\(\vec{u}\)</span>.</p>
+</dd>
+</dl>
+<p>A very interesting special class of systems are <em>linear and time-independent</em>
+systems, or <em>LTI</em> for short. These can be expressed in the following form:</p>
+<div class="math notranslate nohighlight">
+\[\frac{d}{dt} \vec{x} = A \vec{x} + B \vec{u}
+\vec{y} = C \vec{x} + D \vec{u}\]</div>
+<p>with matrices <span class="math notranslate nohighlight">\(A\)</span>, <span class="math notranslate nohighlight">\(B\)</span>, <span class="math notranslate nohighlight">\(C\)</span>, <span class="math notranslate nohighlight">\(D\)</span>. These systems are
+particularly interesting, because there are generic methods for solving the
+differential equation for the state in closed form, for analysing the
+<a class="reference external" href="https://en.wikipedia.org/wiki/Controllability">controllability</a>,
+<a class="reference external" href="https://en.wikipedia.org/wiki/Observability">observability</a> and
+<a class="reference external" href="https://en.wikipedia.org/wiki/Stability_theory">stability</a> of such a system
+and for designing <a class="reference external" href="https://en.wikipedia.org/wiki/Control_system">controllers</a>
+and so-called <a class="reference external" href="https://en.wikipedia.org/wiki/State_observer">observers</a>.</p>
+<p>However, MoDyPy is able to handle non-linear and linear systems. It can also
+<a class="reference internal" href="api/packages/linearization.html"><span class="doc">derive linear approximations</span></a> of the dynamics
+of a non-linear system.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="MoDyPy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api/api.html" class="btn btn-neutral float-right" title="API Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

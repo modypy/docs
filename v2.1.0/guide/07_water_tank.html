@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Steady-State: A Water Tank &mdash; MoDyPy v2.1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Linearizing the Water Tank" href="08_linearization.html" />
+    <link rel="prev" title="Discrete-Time: Sampling a DC-Engine" href="06_dc_engine_sampling.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> MoDyPy
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../guide.html">User’s Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="01_integrator.html">Single States: A Simple Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_pendulum.html">Multiple States: A Pendulum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_planet_orbit.html">Multi-Dimensional States: A Planet Orbit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_bouncing_ball.html">Zero-Crossing Events: A Bouncing Ball</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_dc_engine.html">Ports and Blocks: A DC-Motor with Propeller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_dc_engine_sampling.html">Discrete-Time: Sampling a DC-Engine</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Steady-State: A Water Tank</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#a-water-tank">A Water Tank</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#defining-the-system">Defining the System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#defining-the-steady-state">Defining the Steady State</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="08_linearization.html">Linearizing the Water Tank</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../guide.html">User’s Guide</a> &raquo;</li>
+      <li>Steady-State: A Water Tank</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/07_water_tank.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="steady-state-a-water-tank">
+<h1>Steady-State: A Water Tank<a class="headerlink" href="#steady-state-a-water-tank" title="Permalink to this headline"></a></h1>
+<p>Besides simulation, another interesting application is steady state
+determination. A steady state is a condition for a dynamical system where the
+state of the system does not change with time. Steady states are important for
+designing linear controllers for non-linear systems, as the knowledge of a
+steady state allows to create a linear approximation of the system around that
+steady state and based on that to create a linear controller.</p>
+<p>In this example we will model the outflow from a water tank and determine the
+amount of inflow necessary to keep the height at a specific level. After this
+example you will know</p>
+<ul class="simple">
+<li><p>how to explicitly model inputs to a system, and</p></li>
+<li><p>how to use the steady-state determination functionality of <cite>MoDyPy</cite> to find a
+steady state that fulfills a given set of constraints.</p></li>
+</ul>
+<section id="a-water-tank">
+<h2>A Water Tank<a class="headerlink" href="#a-water-tank" title="Permalink to this headline"></a></h2>
+<p>We will model a water tank with an inflow and an outflow, as shown in
+<a class="reference internal" href="#tank-flow"><span class="std std-numref">Fig. 10</span></a>. The tank has a cross section area of <span class="math notranslate nohighlight">\(A_t\)</span>.
+An inflow with a cross section of <span class="math notranslate nohighlight">\(A_1\)</span> provides incoming water at a
+velocity of <span class="math notranslate nohighlight">\(v_1\left(t\right)\)</span> and the current fill height of the tank is
+<span class="math notranslate nohighlight">\(h\left(t\right)\)</span>. As a consequence of the pressure of the water, the
+water flows out of the tank through an outflow with cross section <span class="math notranslate nohighlight">\(A_2\)</span>
+at a velocity of <span class="math notranslate nohighlight">\(v_2\left(t\right)\)</span>.</p>
+<figure class="align-center" id="id1">
+<span id="tank-flow"></span><img alt="Tank with inflow and outflow" src="../_images/07_tank_flow.svg" /><figcaption>
+<p><span class="caption-number">Fig. 10 </span><span class="caption-text">Tank with inflow and outflow</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>According to <a class="reference external" href="https://en.wikipedia.org/wiki/Torricelli%27s_law">Toricelli’s Law</a>, we know that</p>
+<div class="math notranslate nohighlight">
+\[v_2\left(t\right) = \sqrt{2 g h\left(t\right)}\]</div>
+<p>Thus, we can describe the change in height <span class="math notranslate nohighlight">\(\dot{h}\left(t\right)\)</span> as
+follows:</p>
+<div class="math notranslate nohighlight">
+\[\dot{h}\left(t\right) =
+\frac{A_1 v_1\left(t\right) - A_2 \sqrt{2 g h\left(t\right)}}{A_t}\]</div>
+<p>It is clear that for any given height <span class="math notranslate nohighlight">\(h_0\)</span> an inflow of</p>
+<div class="math notranslate nohighlight">
+\[v_1\left(t\right) = \sqrt{2 g h_0} \frac{A_2}{A_1}\]</div>
+<p>is required to keep a steady height. However, we will now determine this
+numerically.</p>
+</section>
+<section id="defining-the-system">
+<h2>Defining the System<a class="headerlink" href="#defining-the-system" title="Permalink to this headline"></a></h2>
+<p>First, we will import all the necessary declarations, define some constants and
+create a new system:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">modypy.model</span> <span class="kn">import</span> <span class="n">System</span><span class="p">,</span> <span class="n">SignalState</span><span class="p">,</span> <span class="n">InputSignal</span><span class="p">,</span> <span class="n">OutputPort</span>
+<span class="kn">from</span> <span class="nn">modypy.linearization</span> <span class="kn">import</span> <span class="n">system_jacobian</span>
+<span class="kn">from</span> <span class="nn">modypy.steady_state</span> <span class="kn">import</span> <span class="n">SteadyStateConfiguration</span><span class="p">,</span> <span class="n">find_steady_state</span>
+
+<span class="c1"># Constants</span>
+<span class="n">G</span> <span class="o">=</span> <span class="mf">9.81</span>    <span class="c1"># Gravity</span>
+<span class="n">A1</span> <span class="o">=</span> <span class="mf">0.01</span>   <span class="c1"># Inflow cross section</span>
+<span class="n">A2</span> <span class="o">=</span> <span class="mf">0.02</span>   <span class="c1"># Outflow cross section</span>
+<span class="n">At</span> <span class="o">=</span> <span class="mf">0.2</span>    <span class="c1"># Tank cross section</span>
+<span class="n">TARGET_HEIGHT</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="c1"># Create a new system</span>
+<span class="n">system</span> <span class="o">=</span> <span class="n">System</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>In our problem, the inflow velocity is an input that may have to be determined
+as part of the steady-state determination. In order for the steady-state
+determination algorithm to recognize it as an input it can modify, we declare it
+as an <a class="reference internal" href="../api/packages/model/ports.html#modypy.model.ports.InputSignal" title="modypy.model.ports.InputSignal"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputSignal</span></code></a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Model the inflow</span>
+<span class="n">inflow_velocity</span> <span class="o">=</span> <span class="n">InputSignal</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now we can define our fill height as a state:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Model the height state</span>
+<span class="k">def</span> <span class="nf">height_derivative</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the time derivative of the height&quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">A1</span><span class="o">*</span><span class="n">data</span><span class="p">[</span><span class="n">inflow_velocity</span><span class="p">]</span>
+            <span class="o">-</span> <span class="n">A2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">G</span><span class="o">*</span><span class="n">data</span><span class="p">[</span><span class="n">height_state</span><span class="p">]))</span><span class="o">/</span><span class="n">At</span>
+
+
+<span class="n">height_state</span> <span class="o">=</span> <span class="n">SignalState</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">derivative_function</span><span class="o">=</span><span class="n">height_derivative</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="defining-the-steady-state">
+<h2>Defining the Steady State<a class="headerlink" href="#defining-the-steady-state" title="Permalink to this headline"></a></h2>
+<p>Our steady state is characterized by three properties:</p>
+<ul class="simple">
+<li><p>the derivative of the state is zero, i.e. the state would not change over
+time,</p></li>
+<li><p>the inflow is non-negative, and</p></li>
+<li><p>the height equals <cite>TARGET_HEIGHT</cite>.</p></li>
+</ul>
+<p>To tell the steady-state algorithm about these constraints, we define a
+<a class="reference internal" href="../api/packages/steady_state.html#modypy.steady_state.SteadyStateConfiguration" title="modypy.steady_state.SteadyStateConfiguration"><code class="xref py py-class docutils literal notranslate"><span class="pre">SteadyStateConfiguration</span></code></a>
+instance. This instance is automatically configured in such a way that the
+algorithm searches for a state in which the state derivative is zero. If we
+wanted, we could change that by assigning <cite>False</cite> to the respective entries of
+the <cite>steady_states</cite> property of the configuration object.</p>
+<p>To constrain the height we define lower and upper bounds for the value of the
+<cite>height</cite> state. Similarly, we can specify a lower bound for the inflow input.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Configure for steady-state determination</span>
+<span class="n">steady_state_config</span> <span class="o">=</span> <span class="n">SteadyStateConfiguration</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+<span class="c1"># Enforce the inflow to be non-negative</span>
+<span class="n">steady_state_config</span><span class="o">.</span><span class="n">input_bounds</span><span class="p">[</span><span class="n">inflow_velocity</span><span class="o">.</span><span class="n">input_slice</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="c1"># Enforce the height to equal the target height</span>
+<span class="n">steady_state_config</span><span class="o">.</span><span class="n">state_bounds</span><span class="p">[</span><span class="n">height_state</span><span class="o">.</span><span class="n">state_slice</span><span class="p">]</span> <span class="o">=</span> <span class="n">TARGET_HEIGHT</span>
+</pre></div>
+</div>
+<p>Now our system including its constraints and inputs is defined and we can run
+the steady-state algorithm. The algorithm returns an
+<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/reference/generated/scipy.optimize.OptimizeResult.html#scipy.optimize.OptimizeResult" title="(in SciPy v1.7.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizeResult</span></code></a> object showing whether
+the search converged and if so, providing the state and the input vector which
+satisfy our constraints.</p>
+<p>We will print these together with the theoretical steady state of our system:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">find_steady_state</span><span class="p">(</span><span class="n">steady_state_config</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Target height: </span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">TARGET_HEIGHT</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Steady state height: </span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">result</span><span class="o">.</span><span class="n">evaluator</span><span class="p">[</span><span class="n">height_state</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Steady state inflow: </span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">result</span><span class="o">.</span><span class="n">evaluator</span><span class="p">[</span><span class="n">inflow_velocity</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Steady state derivative: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">result</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">state_derivative</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Theoretical steady state inflow: </span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">G</span><span class="o">*</span><span class="n">TARGET_HEIGHT</span><span class="p">)</span><span class="o">*</span><span class="n">A2</span><span class="o">/</span><span class="n">A1</span>
+<span class="p">))</span>
+</pre></div>
+</div>
+<p>Running this code should give us the following output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Target</span> <span class="n">height</span><span class="p">:</span> <span class="mf">5.000000</span>
+<span class="n">Steady</span> <span class="n">state</span> <span class="n">height</span><span class="p">:</span> <span class="mf">5.000000</span>
+<span class="n">Steady</span> <span class="n">state</span> <span class="n">inflow</span><span class="p">:</span> <span class="mf">19.809153</span>
+<span class="n">Steady</span> <span class="n">state</span> <span class="n">derivative</span><span class="p">:</span> <span class="p">[</span><span class="mf">3.22346662e-06</span><span class="p">]</span>
+<span class="n">Theoretical</span> <span class="n">steady</span> <span class="n">state</span> <span class="n">inflow</span><span class="p">:</span> <span class="mf">19.809089</span>
+</pre></div>
+</div>
+<p>We see that the determined and the theoretical inflow coincide and that the
+height is at the target that we want it to be. Playing around with the target
+height we get different values:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Target</span> <span class="n">height</span><span class="p">:</span> <span class="mf">7.000000</span>
+<span class="n">Steady</span> <span class="n">state</span> <span class="n">height</span><span class="p">:</span> <span class="mf">7.000000</span>
+<span class="n">Steady</span> <span class="n">state</span> <span class="n">inflow</span><span class="p">:</span> <span class="mf">23.439796</span>
+<span class="n">Steady</span> <span class="n">state</span> <span class="n">derivative</span><span class="p">:</span> <span class="p">[</span><span class="mf">6.82950784e-05</span><span class="p">]</span>
+<span class="n">Theoretical</span> <span class="n">steady</span> <span class="n">state</span> <span class="n">inflow</span><span class="p">:</span> <span class="mf">23.438430</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="06_dc_engine_sampling.html" class="btn btn-neutral float-left" title="Discrete-Time: Sampling a DC-Engine" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="08_linearization.html" class="btn btn-neutral float-right" title="Linearizing the Water Tank" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

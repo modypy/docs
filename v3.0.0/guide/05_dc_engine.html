@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ports and Blocks: A DC-Motor with Propeller &mdash; MoDyPy 3.0.0+0.gd993396.dirty documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Discrete-Time: Sampling a DC-Engine" href="06_dc_engine_sampling.html" />
+    <link rel="prev" title="Zero-Crossing Events: A Bouncing Ball" href="04_bouncing_ball.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> MoDyPy
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../guide.html">User’s Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="01_integrator.html">Single States: A Simple Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_pendulum.html">Multiple States: A Pendulum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_planet_orbit.html">Multi-Dimensional States: A Planet Orbit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_bouncing_ball.html">Zero-Crossing Events: A Bouncing Ball</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Ports and Blocks: A DC-Motor with Propeller</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-engine-model">The Engine Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#defining-our-system">Defining our System</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#a-dc-motor-block">A DC-Motor Block</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#a-static-propeller-model">A Static Propeller Model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#building-an-engine-block">Building an Engine Block</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#putting-it-all-together">Putting it all together</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-simulation">Running the Simulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-aerodynamics-and-electromechanics-block-libraries">The Aerodynamics and Electromechanics Block Libraries</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="06_dc_engine_sampling.html">Discrete-Time: Sampling a DC-Engine</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_water_tank.html">Steady-State: A Water Tank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_linearization.html">Linearizing the Water Tank</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../guide.html">User’s Guide</a> &raquo;</li>
+      <li>Ports and Blocks: A DC-Motor with Propeller</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/05_dc_engine.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ports-and-blocks-a-dc-motor-with-propeller">
+<h1><a class="toc-backref" href="#id4">Ports and Blocks: A DC-Motor with Propeller</a><a class="headerlink" href="#ports-and-blocks-a-dc-motor-with-propeller" title="Permalink to this headline"></a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#ports-and-blocks-a-dc-motor-with-propeller" id="id4">Ports and Blocks: A DC-Motor with Propeller</a></p>
+<ul>
+<li><p><a class="reference internal" href="#the-engine-model" id="id5">The Engine Model</a></p></li>
+<li><p><a class="reference internal" href="#defining-our-system" id="id6">Defining our System</a></p>
+<ul>
+<li><p><a class="reference internal" href="#a-dc-motor-block" id="id7">A DC-Motor Block</a></p></li>
+<li><p><a class="reference internal" href="#a-static-propeller-model" id="id8">A Static Propeller Model</a></p></li>
+<li><p><a class="reference internal" href="#building-an-engine-block" id="id9">Building an Engine Block</a></p></li>
+<li><p><a class="reference internal" href="#putting-it-all-together" id="id10">Putting it all together</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#running-the-simulation" id="id11">Running the Simulation</a></p></li>
+<li><p><a class="reference internal" href="#the-aerodynamics-and-electromechanics-block-libraries" id="id12">The Aerodynamics and Electromechanics Block Libraries</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>Until now, we have created our states individually and referenced them directly.
+However, in practical simulation you might want to define reusable building
+blocks and connect their inputs and outputs dynamically.</p>
+<p>For example, when analysing
+<a class="reference external" href="https://en.wikipedia.org/wiki/Quadcopter">multicopter dynamics</a> we might want
+to have a reusable block for an engine consisting of a DC-motor and a propeller.
+We might want to provide individual voltages to individual motors and use an
+atmospheric model to determine the density of the air based on altitude.
+We might want to sum up the thrust and torque generated by the engines to
+determine the total force and torque acting on the multicopter and finally feed
+that into some reusable block for rigid-body motion.</p>
+<p>In this example, we will define re-usable building blocks for a DC-motor and a
+propeller, and assemble them to a DC-engine. We will then simulate a step-
+response of such a motor and plot the results.
+At the end of this exercise, you will know</p>
+<ul class="simple">
+<li><p>how to define ports as placeholders for signals,</p></li>
+<li><p>how to connect ports to signals, and</p></li>
+<li><p>how to define reusable building blocks for systems.</p></li>
+</ul>
+<section id="the-engine-model">
+<h2><a class="toc-backref" href="#id5">The Engine Model</a><a class="headerlink" href="#the-engine-model" title="Permalink to this headline"></a></h2>
+<p>The schematic of the engine is shown in <a class="reference internal" href="#dc-engine-schematic"><span class="std std-numref">Fig. 13</span></a>.</p>
+<figure class="align-center" id="id1">
+<span id="dc-engine-schematic"></span><img alt="DC-Engine Schematic" src="../_images/05_dc_engine_schematic.svg" /><figcaption>
+<p><span class="caption-number">Fig. 13 </span><span class="caption-text">DC-Engine Schematic</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>A DC motor converts electrical energy to mechanical energy by inducing a
+magnetic field, which interacts with an already existing field generated by a
+set of permanent magnets.
+We will skip the details of the actual derivations here, and go straight to the
+dynamics equations.</p>
+<p>We have two state variables for the motor, with one being the angular velocity
+<span class="math notranslate nohighlight">\(\omega\left(t\right)\)</span> and the other being the current flowing through
+the coil <span class="math notranslate nohighlight">\(i\left(t\right)\)</span>.
+Their dynamics can be expressed this way:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\frac{d}{dt} i\left(t\right) &amp;=
+\frac{u\left(t\right) - K_v \omega\left(t\right) - R i\left(t\right)}{L} \\
+\frac{d}{dt} \omega\left(r\right) &amp;=
+\frac{K_v i\left(t\right) - \tau_d\left(t\right)}{J}\end{split}\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(K_v\)</span>, <span class="math notranslate nohighlight">\(R\)</span>, <span class="math notranslate nohighlight">\(L\)</span> and <span class="math notranslate nohighlight">\(J\)</span> are the motor constant,
+the internal resistance and inductance of the motor as well as the moment of
+inertia of the motor load.
+Further, <span class="math notranslate nohighlight">\(u\left(t\right)\)</span> is the input voltage and
+<span class="math notranslate nohighlight">\(\tau_d\left(t\right)\)</span> is the load torque.</p>
+<p>The second part of our engine is the propeller, which will produce the load
+torque, but also thrust, both of which depend on the propeller speed.
+We will use a static propeller model, as we will assume that the forward
+velocity of our engine through the air is small compared to the velocity of our
+propeller tips.</p>
+<p>Our propeller has no internal state, it just generates thrust and requires
+torque to overcome it aerodynamic drag. The formulae for this are given as
+follows:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}F\left(t\right) &amp;= c_t \rho D^4 n\left(t\right)^2 \\
+\tau_d\left(t\right) &amp;= \frac{c_p}{2 \pi} \rho D^5 n\left(t\right)^2\end{split}\]</div>
+<p>These formulae are derived from the
+<a class="reference external" href="https://m-selig.ae.illinois.edu/props/propDB.html">standard propeller formulae</a>, which specify thrust and
+power based on</p>
+<ul class="simple">
+<li><p>the thrust coefficient <span class="math notranslate nohighlight">\(c_t\)</span>,</p></li>
+<li><p>the power coefficient <span class="math notranslate nohighlight">\(c_p\)</span>, and</p></li>
+<li><p>the diameter <span class="math notranslate nohighlight">\(D\)</span> of the propeller.</p></li>
+</ul>
+<p>As parameters, the rotation speed <span class="math notranslate nohighlight">\(n\left(t\right)\)</span> and the air density
+<span class="math notranslate nohighlight">\(\rho\)</span> are required.
+Note that the rotational speed and the angular velocity are related by
+<span class="math notranslate nohighlight">\(\omega\left(t\right) = 2 \pi n\left(t\right)\)</span>.</p>
+</section>
+<section id="defining-our-system">
+<h2><a class="toc-backref" href="#id6">Defining our System</a><a class="headerlink" href="#defining-our-system" title="Permalink to this headline"></a></h2>
+<p>We will now define an engine block, which in turn contains a DC motor and a
+propeller block, as shown in <a class="reference internal" href="#dc-engine-blocks"><span class="std std-numref">Fig. 14</span></a>.</p>
+<figure class="align-center" id="id2">
+<span id="dc-engine-blocks"></span><img alt="DC-Engine Blocks" src="../_images/05_dc_engine_blocks.svg" /><figcaption>
+<p><span class="caption-number">Fig. 14 </span><span class="caption-text">DC-Engine Blocks</span><a class="headerlink" href="#id2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>Again, we start by importing everything we need and defining some constants:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">modypy.model</span> <span class="kn">import</span> <span class="n">System</span><span class="p">,</span> <span class="n">Block</span><span class="p">,</span> <span class="n">Port</span><span class="p">,</span> <span class="n">signal_method</span>
+<span class="kn">from</span> <span class="nn">modypy.blocks.sources</span> <span class="kn">import</span> <span class="n">constant</span>
+<span class="kn">from</span> <span class="nn">modypy.simulation</span> <span class="kn">import</span> <span class="n">Simulator</span><span class="p">,</span> <span class="n">SimulationResult</span>
+
+<span class="c1"># Motor Parameters</span>
+<span class="n">MOTOR_CONSTANT</span> <span class="o">=</span> <span class="mf">789.E-6</span>  <span class="c1"># V/(rad/s)</span>
+<span class="n">RESISTANCE</span> <span class="o">=</span> <span class="mf">43.3E-3</span>  <span class="c1"># Ohm</span>
+<span class="n">INDUCTANCE</span> <span class="o">=</span> <span class="mf">1.9E-3</span>  <span class="c1"># H</span>
+<span class="n">MOMENT_OF_INERTIA</span> <span class="o">=</span> <span class="mf">5.284E-6</span>  <span class="c1"># kg m^2</span>
+
+<span class="c1"># Propeller Parameters</span>
+<span class="n">DIAMETER</span> <span class="o">=</span> <span class="mi">8</span><span class="o">*</span><span class="mf">25.4E-3</span>  <span class="c1"># m</span>
+<span class="n">THRUST_COEFFICIENT</span> <span class="o">=</span> <span class="mf">0.09</span>
+<span class="n">POWER_COEFFICIENT</span> <span class="o">=</span> <span class="mf">0.04</span>
+</pre></div>
+</div>
+<section id="a-dc-motor-block">
+<h3><a class="toc-backref" href="#id7">A DC-Motor Block</a><a class="headerlink" href="#a-dc-motor-block" title="Permalink to this headline"></a></h3>
+<p>Now, let us define a block for this DC-motor.
+We do that by subclassing <code class="xref py py-class docutils literal notranslate"><span class="pre">modypy.model.Block</span></code>.
+In the constructor, we first store all the model parameters, such as the motor
+constant or the inductance.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">DCMotor</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A block describing a DC-motor&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">parent</span><span class="p">,</span>
+                 <span class="n">motor_constant</span><span class="p">,</span>
+                 <span class="n">resistance</span><span class="p">,</span>
+                 <span class="n">inductance</span><span class="p">,</span>
+                 <span class="n">moment_of_inertia</span><span class="p">,</span>
+                 <span class="n">initial_speed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">initial_current</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">Block</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">motor_constant</span> <span class="o">=</span> <span class="n">motor_constant</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resistance</span> <span class="o">=</span> <span class="n">resistance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inductance</span> <span class="o">=</span> <span class="n">inductance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">moment_of_inertia</span> <span class="o">=</span> <span class="n">moment_of_inertia</span>
+</pre></div>
+</div>
+<p>In the next step, we create our states:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the velocity and current state</span>
+<span class="c1"># These can also be used as signals which export the exact value of</span>
+<span class="c1"># the respective state.</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">omega</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                   <span class="n">derivative_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">omega_dt</span><span class="p">,</span>
+                   <span class="n">initial_condition</span><span class="o">=</span><span class="n">initial_speed</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                     <span class="n">derivative_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_dt</span><span class="p">,</span>
+                     <span class="n">initial_condition</span><span class="o">=</span><span class="n">initial_current</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>There are three major difference to what we did earlier when defining states:</p>
+<ul class="simple">
+<li><p>The first parameter to the constructor is now the instance of the block
+instead of the system.
+This first parameter is the <em>owner</em> of the state or signal and both the
+system and blocks may be owners of states and signals.</p></li>
+<li><p>As derivative function we specify <em>bound object methods</em>.
+These have access any instance variables, such as our model parameters as well
+as the states, signals and ports we declared.</p></li>
+</ul>
+<p>We need some way to determine the input voltage and the external load
+acting on the motor axle.
+We do that by introducing two <a class="reference internal" href="../api/packages/model/ports.html#modypy.model.ports.Port" title="modypy.model.ports.Port"><code class="xref py py-class docutils literal notranslate"><span class="pre">Port</span></code></a> instances.
+Ports are place-holder objects that can be connected to signals.
+We will use them to access the value of whatever signal will be connected to
+them later.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create (input) ports for voltage and external torque load</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">voltage</span> <span class="o">=</span> <span class="n">Port</span><span class="p">()</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">external_torque</span> <span class="o">=</span> <span class="n">Port</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>What is missing are the definitions of the derivative functions and the signal
+values:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">omega_dt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the derivative of the angular velocity&quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">motor_constant</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+             <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_torque</span><span class="p">(</span><span class="n">data</span><span class="p">))</span> <span class="o">/</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">moment_of_inertia</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">current_dt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the derivative of the coil current&quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">voltage</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+             <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">resistance</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+             <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">motor_constant</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">omega</span><span class="p">(</span><span class="n">data</span><span class="p">))</span> <span class="o">/</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inductance</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally we define some additional output signals of the block:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@signal_method</span>
+<span class="k">def</span> <span class="nf">speed_rps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the rotational velocity in rotations per second&quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">omega</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+<span class="nd">@signal_method</span>
+<span class="k">def</span> <span class="nf">torque</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the total torque generated by the motor&quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">motor_constant</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>While the state <code class="docutils literal notranslate"><span class="pre">omega</span></code> holds the angular speed in radians per time-unit
+(usually: seconds), the <code class="docutils literal notranslate"><span class="pre">speed_rps</span></code> signal provides it in revolutions per
+time-unit.
+In addition, we provide the total torque generated by the motor.
+This is the torque that acts on the motor mount and thereby on the frame.</p>
+<p>We use the <code class="xref py py-func docutils literal notranslate"><span class="pre">modypy.model.ports.signal_method</span></code> decorator
+to convert the methods to signals.
+If we have an instance <cite>motor</cite> of our <cite>DCMotor</cite> class, <cite>motor.speed_rps</cite> will
+be a <cite>Signal</cite> instance representing the speed.
+That signal will be unique for the <cite>DCMotor</cite> instance, and will not change over
+the lifetime of the latter.</p>
+<p>Note that we did not have to define signal output functions for our states
+<code class="docutils literal notranslate"><span class="pre">omega</span></code> and <code class="docutils literal notranslate"><span class="pre">current</span></code>, as states can also be used as signals.</p>
+</section>
+<section id="a-static-propeller-model">
+<h3><a class="toc-backref" href="#id8">A Static Propeller Model</a><a class="headerlink" href="#a-static-propeller-model" title="Permalink to this headline"></a></h3>
+<p>So, we define our static propeller block:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Propeller</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A block representing a static propeller&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">parent</span><span class="p">,</span>
+                 <span class="n">thrust_coefficient</span><span class="p">,</span>
+                 <span class="n">power_coefficient</span><span class="p">,</span>
+                 <span class="n">diameter</span><span class="p">):</span>
+        <span class="n">Block</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thrust_coefficient</span> <span class="o">=</span> <span class="n">thrust_coefficient</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">power_coefficient</span> <span class="o">=</span> <span class="n">power_coefficient</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">=</span> <span class="n">diameter</span>
+
+        <span class="c1"># Define the input ports for propeller speed and air density</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed_rps</span> <span class="o">=</span> <span class="n">Port</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">density</span> <span class="o">=</span> <span class="n">Port</span><span class="p">()</span>
+
+    <span class="nd">@signal_method</span>
+    <span class="k">def</span> <span class="nf">thrust</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the thrust force of the propeller&quot;&quot;&quot;</span>
+
+        <span class="n">rho</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed_rps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">thrust_coefficient</span> <span class="o">*</span> <span class="n">rho</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">**</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">n</span> <span class="o">**</span> <span class="mi">2</span>
+
+    <span class="nd">@signal_method</span>
+    <span class="k">def</span> <span class="nf">torque</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the drag torque of the propeller&quot;&quot;&quot;</span>
+
+        <span class="n">rho</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed_rps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">power_coefficient</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> \
+            <span class="n">rho</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">**</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">n</span> <span class="o">**</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>The block does not have any states, so it is static, but we still use a block
+for it to encapsulate the parameters of the propeller.</p>
+</section>
+<section id="building-an-engine-block">
+<h3><a class="toc-backref" href="#id9">Building an Engine Block</a><a class="headerlink" href="#building-an-engine-block" title="Permalink to this headline"></a></h3>
+<p>Finally, let us assemble an engine block from our motor and our propeller.
+The engine block shall provide thrust and total torque of the engine as outputs
+and accept the voltage and the air density as inputs.
+We will interconnect the DC-motor and the propeller internally, by providing the
+speed of the DC-motor to the propeller as its turning speed and by providing the
+torque load of the propeller as external load to the DC-motor.</p>
+<p>For our engine block, we first create the elements — the motor and the propeller
+— and make everything visible to the outside that needs to be:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Engine</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A block defining an engine consisting of a DC motor and a propeller&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">parent</span><span class="p">,</span>
+                 <span class="n">thrust_coefficient</span><span class="p">,</span>
+                 <span class="n">power_coefficient</span><span class="p">,</span>
+                 <span class="n">diameter</span><span class="p">,</span>
+                 <span class="n">motor_constant</span><span class="p">,</span>
+                 <span class="n">resistance</span><span class="p">,</span>
+                 <span class="n">inductance</span><span class="p">,</span>
+                 <span class="n">moment_of_inertia</span><span class="p">):</span>
+        <span class="n">Block</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+
+        <span class="c1"># Create the DC motor and the propeller</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dc_motor</span> <span class="o">=</span> <span class="n">DCMotor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                <span class="n">motor_constant</span><span class="o">=</span><span class="n">motor_constant</span><span class="p">,</span>
+                                <span class="n">resistance</span><span class="o">=</span><span class="n">resistance</span><span class="p">,</span>
+                                <span class="n">inductance</span><span class="o">=</span><span class="n">inductance</span><span class="p">,</span>
+                                <span class="n">moment_of_inertia</span><span class="o">=</span><span class="n">moment_of_inertia</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">propeller</span> <span class="o">=</span> <span class="n">Propeller</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                   <span class="n">thrust_coefficient</span><span class="o">=</span><span class="n">thrust_coefficient</span><span class="p">,</span>
+                                   <span class="n">power_coefficient</span><span class="o">=</span><span class="n">power_coefficient</span><span class="p">,</span>
+                                   <span class="n">diameter</span><span class="o">=</span><span class="n">diameter</span><span class="p">)</span>
+
+        <span class="c1"># We will simply pass through the voltage and density ports of the</span>
+        <span class="c1"># motor and the propeller</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">voltage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dc_motor</span><span class="o">.</span><span class="n">voltage</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">density</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">propeller</span><span class="o">.</span><span class="n">density</span>
+
+        <span class="c1"># We also pass on the thrust and the torque of the whole engine</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">propeller</span><span class="o">.</span><span class="n">thrust</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">torque</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dc_motor</span><span class="o">.</span><span class="n">torque</span>
+</pre></div>
+</div>
+<p>Now we need to connect the speed output of the motor to the speed input of the
+propeller.
+For that, we use the <code class="docutils literal notranslate"><span class="pre">connect</span></code> method of the
+<a class="reference internal" href="../api/packages/model/ports.html#modypy.model.ports.Port" title="modypy.model.ports.Port"><code class="xref py py-class docutils literal notranslate"><span class="pre">Port</span></code></a> class:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The propeller needs to know the speed of the motor axle</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">dc_motor</span><span class="o">.</span><span class="n">speed_rps</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">propeller</span><span class="o">.</span><span class="n">speed_rps</span><span class="p">)</span>
+
+<span class="c1"># The DC-motor needs to know the torque required by the propeller</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">propeller</span><span class="o">.</span><span class="n">torque</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dc_motor</span><span class="o">.</span><span class="n">external_torque</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now, the ports and signals are properly connected. Finally, it’s time to put it
+all together.</p>
+</section>
+<section id="putting-it-all-together">
+<h3><a class="toc-backref" href="#id10">Putting it all together</a><a class="headerlink" href="#putting-it-all-together" title="Permalink to this headline"></a></h3>
+<p>What we still need is a way of providing the voltage and the air density.
+We will simply use constants for these, which we can create using the
+<code class="docutils literal notranslate"><span class="pre">constant</span></code> function from the <a class="reference internal" href="../api/packages/blocks/sources.html#module-modypy.blocks.sources" title="modypy.blocks.sources"><code class="xref py py-mod docutils literal notranslate"><span class="pre">modypy.blocks.sources</span></code></a> module.</p>
+<p>So, let us create our system:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">system</span> <span class="o">=</span> <span class="n">System</span><span class="p">()</span>
+<span class="n">engine</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+                <span class="n">motor_constant</span><span class="o">=</span><span class="n">MOTOR_CONSTANT</span><span class="p">,</span>
+                <span class="n">resistance</span><span class="o">=</span><span class="n">RESISTANCE</span><span class="p">,</span>
+                <span class="n">inductance</span><span class="o">=</span><span class="n">INDUCTANCE</span><span class="p">,</span>
+                <span class="n">moment_of_inertia</span><span class="o">=</span><span class="n">MOMENT_OF_INERTIA</span><span class="p">,</span>
+                <span class="n">thrust_coefficient</span><span class="o">=</span><span class="n">THRUST_COEFFICIENT</span><span class="p">,</span>
+                <span class="n">power_coefficient</span><span class="o">=</span><span class="n">POWER_COEFFICIENT</span><span class="p">,</span>
+                <span class="n">diameter</span><span class="o">=</span><span class="n">DIAMETER</span><span class="p">)</span>
+
+<span class="c1"># Provide constant signals for the voltage and the air density</span>
+<span class="n">voltage</span> <span class="o">=</span> <span class="n">constant</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">3.5</span><span class="p">)</span>
+<span class="n">density</span> <span class="o">=</span> <span class="n">constant</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">1.29</span><span class="p">)</span>
+
+<span class="c1"># Connect them to the corresponding inputs of the engine</span>
+<span class="n">engine</span><span class="o">.</span><span class="n">voltage</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">voltage</span><span class="p">)</span>
+<span class="n">engine</span><span class="o">.</span><span class="n">density</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">density</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note how we use the <code class="docutils literal notranslate"><span class="pre">constant</span></code> function to create signals with constant values
+for our voltage and density.</p>
+</section>
+</section>
+<section id="running-the-simulation">
+<h2><a class="toc-backref" href="#id11">Running the Simulation</a><a class="headerlink" href="#running-the-simulation" title="Permalink to this headline"></a></h2>
+<p>Now, our system is fully assembled. Let’s run a simulation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the simulator and run it</span>
+<span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">start_time</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">max_step</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">SimulationResult</span><span class="p">(</span><span class="n">system</span><span class="p">,</span>
+                          <span class="n">simulator</span><span class="o">.</span><span class="n">run_until</span><span class="p">(</span><span class="n">time_boundary</span><span class="o">=</span><span class="mf">0.5</span><span class="p">))</span>
+
+<span class="c1"># Plot the result</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">engine</span><span class="o">.</span><span class="n">thrust</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Engine with DC-Motor and Static Propeller&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Thrust&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;05_dc_engine_simulation.png&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>That’s it!
+The result is shown in <a class="reference internal" href="#dc-engine-simulation"><span class="std std-numref">Fig. 15</span></a>.</p>
+<figure class="align-center" id="id3">
+<span id="dc-engine-simulation"></span><img alt="DC-Engine simulation" src="../_images/05_dc_engine_simulation.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 15 </span><span class="caption-text">DC-Engine simulation</span><a class="headerlink" href="#id3" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>We can now reuse the blocks that we created in other models and make as many
+instances of them as we like.</p>
+</section>
+<section id="the-aerodynamics-and-electromechanics-block-libraries">
+<h2><a class="toc-backref" href="#id12">The Aerodynamics and Electromechanics Block Libraries</a><a class="headerlink" href="#the-aerodynamics-and-electromechanics-block-libraries" title="Permalink to this headline"></a></h2>
+<p>Besides some very basic blocks such as integrators, sums or gains, MoDyPy also
+provides a set of block libraries for special applications, such as the
+<a class="reference internal" href="../api/packages/blocks/aerodyn.html#module-modypy.blocks.aerodyn" title="modypy.blocks.aerodyn"><code class="xref py py-mod docutils literal notranslate"><span class="pre">aerodyn</span></code></a> or the <a class="reference internal" href="../api/packages/blocks/elmech.html#module-modypy.blocks.elmech" title="modypy.blocks.elmech"><code class="xref py py-mod docutils literal notranslate"><span class="pre">elmech</span></code></a> library, which contain a propeller block that is a bit
+more sophisticated than we defined in this example, a <a class="reference internal" href="../api/packages/blocks/aerodyn.html#modypy.blocks.aerodyn.Thruster" title="modypy.blocks.aerodyn.Thruster"><code class="xref py py-class docutils literal notranslate"><span class="pre">Thruster</span></code></a> and a block for a DC-motor, which can be
+easily reused.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="04_bouncing_ball.html" class="btn btn-neutral float-left" title="Zero-Crossing Events: A Bouncing Ball" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="06_dc_engine_sampling.html" class="btn btn-neutral float-right" title="Discrete-Time: Sampling a DC-Engine" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

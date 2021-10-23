@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modypy.model.ports &mdash; MoDyPy v2.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> MoDyPy
+            <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide.html">User’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>modypy.model.ports</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for modypy.model.ports</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Values in a model are transported by signals. In MoDyPy signals are always</span>
+<span class="sd">real-valued, and may be multi-dimensional.</span>
+
+<span class="sd">The value of a signal is defined by a value function, which may depend on the</span>
+<span class="sd">value of any system state or signal, which are made accessible by the</span>
+<span class="sd">:class:`DataProvider &lt;modypy.model.evaluation.DataProvider&gt;` object passed to</span>
+<span class="sd">it.</span>
+
+<span class="sd">Signals differ from states in that they do not have their own memory - although</span>
+<span class="sd">they may be based on the values of states, which represent memory.</span>
+
+<span class="sd">Ports serve as symbolic placeholders for signals, and may be connected to each</span>
+<span class="sd">other and to signals using the ``connect`` method. In fact, each signal is also</span>
+<span class="sd">a port.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<span class="n">ShapeType</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
+
+
+<div class="viewcode-block" id="PortNotConnectedError"><a class="viewcode-back" href="../../../api/packages/model/ports.html#modypy.model.ports.PortNotConnectedError">[docs]</a><span class="k">class</span> <span class="nc">PortNotConnectedError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Exception when a port is evaluated that is not connected to a signal&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="Port"><a class="viewcode-back" href="../../../api/packages/model/ports.html#modypy.model.ports.Port">[docs]</a><span class="k">class</span> <span class="nc">Port</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A port is a structural element of a system that can be connected to a</span>
+<span class="sd">    signal.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="n">ShapeType</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owner</span> <span class="o">=</span> <span class="n">owner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">shape</span><span class="p">,)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">signal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The signal this port is connected to or None.&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="o">==</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">signal</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">signal_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A slice object that represents the indices of this port in the</span>
+<span class="sd">        signals vector.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">signal_slice</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">signal_range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A range object that represents the indices of this port in the</span>
+<span class="sd">        signals vector.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">signal_range</span>
+
+<div class="viewcode-block" id="Port.connect"><a class="viewcode-back" href="../../../api/packages/model/ports.html#modypy.model.ports.Port.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Connect this port to another port.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          other: The other port to connect to</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">          ShapeMismatchError: if the shapes of the ports do not match</span>
+<span class="sd">          MultipleSignalsError: if both ports are already connected to</span>
+<span class="sd">            different signals</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="c1"># It is an error if the shapes of the ports do not match.</span>
+            <span class="k">raise</span> <span class="n">ShapeMismatchError</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">signal</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Both ports are already connected to a signal.</span>
+            <span class="c1"># It is an error if they are not connected to the same signal.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">signal</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">MultipleSignalsError</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># We are not yet connected to a signal, so we take the reference</span>
+                <span class="c1"># from the other port.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">reference</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">reference</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># The other port is not yet connected to a signal, so we update</span>
+                <span class="c1"># the reference of the other port.</span>
+                <span class="n">other</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span></div>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PortNotConnectedError</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_port_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MultipleSignalsError"><a class="viewcode-back" href="../../../api/packages/model/ports.html#modypy.model.ports.MultipleSignalsError">[docs]</a><span class="k">class</span> <span class="nc">MultipleSignalsError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This exception is raised if two ports shall be connected to each other</span>
+<span class="sd">    that are already connected to different signals.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ShapeMismatchError"><a class="viewcode-back" href="../../../api/packages/model/ports.html#modypy.model.ports.ShapeMismatchError">[docs]</a><span class="k">class</span> <span class="nc">ShapeMismatchError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This exception is raised if two ports with incompatible shapes shall be</span>
+<span class="sd">    connected to each other.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="OutputPort"><a class="viewcode-back" href="../../../api/packages/model/ports.html#modypy.model.ports.OutputPort">[docs]</a><span class="k">class</span> <span class="nc">OutputPort</span><span class="p">(</span><span class="n">Port</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An ``OutputPort`` is a special port that is considered to be an output of</span>
+<span class="sd">    the system. In simulation or steady-state determination, output ports play</span>
+<span class="sd">    a special role.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="n">ShapeType</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">Port</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">allocate_output_lines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">output_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A slice object that represents the indices of this output in the</span>
+<span class="sd">        outputs vector.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_index</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">output_index</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">output_range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A range object that represents the indices of this output in the</span>
+<span class="sd">        outputs vector.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_index</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">output_index</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Signal"><a class="viewcode-back" href="../../../api/packages/model/ports.html#modypy.model.ports.Signal">[docs]</a><span class="k">class</span> <span class="nc">Signal</span><span class="p">(</span><span class="n">Port</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A signal provides the value for all ports connected to it.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="n">ShapeType</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">Port</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signal_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">allocate_signal_lines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">signal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The signal this port is connected. As this is a signal, it returns</span>
+<span class="sd">        itself.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">signal_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A slice object that represents the indices of this signal in the</span>
+<span class="sd">        signals vector.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_index</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">signal_index</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">signal_range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A range object that represents the indices of this signal in the</span>
+<span class="sd">        signals vector.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_index</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">signal_index</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InputSignal"><a class="viewcode-back" href="../../../api/packages/model/ports.html#modypy.model.ports.InputSignal">[docs]</a><span class="k">class</span> <span class="nc">InputSignal</span><span class="p">(</span><span class="n">Signal</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An ``InputSignal`` is a special kind of signal that is considered an</span>
+<span class="sd">    input into the system. In simulation and linearization, input signals play a</span>
+<span class="sd">    special role.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="n">ShapeType</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">Signal</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">allocate_input_lines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">input_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A slice object that represents the indices of this input in the</span>
+<span class="sd">        inputs vector.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_index</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">input_index</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">input_range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A range object that represents the indices of this input in the</span>
+<span class="sd">        inputs vector.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_index</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">input_index</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

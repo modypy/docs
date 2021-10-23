@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modpy.model.ports: Ports and Signals &mdash; MoDyPy 3.0.0+0.gd993396.dirty documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="modpy.model.states: States and State-Signals" href="states.html" />
+    <link rel="prev" title="modpy.model.events: Events" href="events.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> MoDyPy
+            <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide.html">User’s Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../model.html">The Model API</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="events.html"><code class="docutils literal notranslate"><span class="pre">modpy.model.events</span></code>: Events</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">modpy.model.ports</span></code>: Ports and Signals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="states.html"><code class="docutils literal notranslate"><span class="pre">modpy.model.states</span></code>: States and State-Signals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="system.html"><code class="docutils literal notranslate"><span class="pre">modpy.model.system</span></code>: Systems and Blocks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../blocks.html">The Blocks Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../simulation.html">Simulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../steady_state.html">Steady-State Determination</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../linearization.html">Linearization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../utils.html">The Utilities Module</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../api.html">API Documentation</a> &raquo;</li>
+          <li><a href="../../model.html">The Model API</a> &raquo;</li>
+      <li><code class="docutils literal notranslate"><span class="pre">modpy.model.ports</span></code>: Ports and Signals</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/api/packages/model/ports.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-modypy.model.ports">
+<span id="modpy-model-ports-ports-and-signals"></span><h1><code class="docutils literal notranslate"><span class="pre">modpy.model.ports</span></code>: Ports and Signals<a class="headerlink" href="#module-modypy.model.ports" title="Permalink to this headline"></a></h1>
+<p>Values in a model are transported by signals. In MoDyPy signals are always
+real-valued, and may be multi-dimensional.</p>
+<p>The value of a signal is defined by a value function, which may depend on the
+value of any system state or signal, which are made accessible by the
+<code class="xref py py-class docutils literal notranslate"><span class="pre">DataProvider</span></code> object passed to
+it.</p>
+<p>Signals differ from states in that they do not have their own memory - although
+they may be based on the values of states, which represent memory.</p>
+<p>Ports serve as symbolic placeholders for signals, and may be connected to each
+other and to signals using the <code class="docutils literal notranslate"><span class="pre">connect</span></code> method. In fact, each signal is also
+a port.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="modypy.model.ports.AbstractSignal">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.model.ports.</span></span><span class="sig-name descname"><span class="pre">AbstractSignal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/ports.html#AbstractSignal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.ports.AbstractSignal" title="Permalink to this definition"></a></dt>
+<dd><p>A signal is a terminal port with a defined value.</p>
+<p>It is connected to itself, i.e., it can only be connected to other,
+unconnected ports or to ports that are already connected to itself.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="modypy.model.ports.AbstractSignal.signal">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">signal</span></span><a class="headerlink" href="#modypy.model.ports.AbstractSignal.signal" title="Permalink to this definition"></a></dt>
+<dd><p>The signal this signal is connected to, i.e., itself.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="modypy.model.ports.InputSignal">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.model.ports.</span></span><span class="sig-name descname"><span class="pre">InputSignal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/ports.html#InputSignal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.ports.InputSignal" title="Permalink to this definition"></a></dt>
+<dd><p>An <code class="docutils literal notranslate"><span class="pre">InputSignal</span></code> is a special kind of signal that is considered an
+input into the system. In steady-state identification and linearization,
+input signals play a special role.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="modypy.model.ports.InputSignal.input_range">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">input_range</span></span><a class="headerlink" href="#modypy.model.ports.InputSignal.input_range" title="Permalink to this definition"></a></dt>
+<dd><p>A range object that represents the indices of this input in the
+inputs vector.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="modypy.model.ports.InputSignal.input_slice">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">input_slice</span></span><a class="headerlink" href="#modypy.model.ports.InputSignal.input_slice" title="Permalink to this definition"></a></dt>
+<dd><p>A slice object that represents the indices of this input in the
+inputs vector.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="modypy.model.ports.MultipleSignalsError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.model.ports.</span></span><span class="sig-name descname"><span class="pre">MultipleSignalsError</span></span><a class="reference internal" href="../../../_modules/modypy/model/ports.html#MultipleSignalsError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.ports.MultipleSignalsError" title="Permalink to this definition"></a></dt>
+<dd><p>This exception is raised if two ports shall be connected to each other
+that are already connected to different signals.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="modypy.model.ports.Port">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.model.ports.</span></span><span class="sig-name descname"><span class="pre">Port</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/ports.html#Port"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.ports.Port" title="Permalink to this definition"></a></dt>
+<dd><p>A port is a structural element of a system that can be connected to a
+signal.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="modypy.model.ports.Port.connect">
+<span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/ports.html#Port.connect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.ports.Port.connect" title="Permalink to this definition"></a></dt>
+<dd><p>Connect this port to another port.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> – The other port to connect to</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="#modypy.model.ports.ShapeMismatchError" title="modypy.model.ports.ShapeMismatchError"><strong>ShapeMismatchError</strong></a> – if the shapes of the ports do not match</p></li>
+<li><p><a class="reference internal" href="#modypy.model.ports.MultipleSignalsError" title="modypy.model.ports.MultipleSignalsError"><strong>MultipleSignalsError</strong></a> – if both ports are already connected to
+    different signals</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="modypy.model.ports.Port.reference">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">reference</span></span><a class="headerlink" href="#modypy.model.ports.Port.reference" title="Permalink to this definition"></a></dt>
+<dd><p>The port referenced by this port</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="modypy.model.ports.Port.signal">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">signal</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#modypy.model.ports.Port" title="modypy.model.ports.Port"><span class="pre">modypy.model.ports.Port</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#modypy.model.ports.Port.signal" title="Permalink to this definition"></a></dt>
+<dd><p>The signal referenced by this port or <code class="docutils literal notranslate"><span class="pre">None</span></code> if this port is not
+connected to any signal.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="modypy.model.ports.PortNotConnectedError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.model.ports.</span></span><span class="sig-name descname"><span class="pre">PortNotConnectedError</span></span><a class="reference internal" href="../../../_modules/modypy/model/ports.html#PortNotConnectedError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.ports.PortNotConnectedError" title="Permalink to this definition"></a></dt>
+<dd><p>This exception is raised when a port is evaluated that is not connected
+to a signal</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="modypy.model.ports.ShapeMismatchError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.model.ports.</span></span><span class="sig-name descname"><span class="pre">ShapeMismatchError</span></span><a class="reference internal" href="../../../_modules/modypy/model/ports.html#ShapeMismatchError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.ports.ShapeMismatchError" title="Permalink to this definition"></a></dt>
+<dd><p>This exception is raised if two ports with incompatible shapes shall be
+connected to each other.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="modypy.model.ports.Signal">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">modypy.model.ports.</span></span><span class="sig-name descname"><span class="pre">Signal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/ports.html#Signal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.ports.Signal" title="Permalink to this definition"></a></dt>
+<dd><p>A signal is a port for which the value is defined by a callable or a
+constant.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modypy.model.ports.decorator">
+<span class="sig-prename descclassname"><span class="pre">modypy.model.ports.</span></span><span class="sig-name descname"><span class="pre">decorator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/ports.html#decorator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.ports.decorator" title="Permalink to this definition"></a></dt>
+<dd><p>Helper function to create decorators with optional arguments</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modypy.model.ports.signal_function">
+<span class="sig-prename descclassname"><span class="pre">modypy.model.ports.</span></span><span class="sig-name descname"><span class="pre">signal_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/ports.html#signal_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.ports.signal_function" title="Permalink to this definition"></a></dt>
+<dd><p>Transform a function into a <code class="docutils literal notranslate"><span class="pre">Signal</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modypy.model.ports.signal_method">
+<span class="sig-prename descclassname"><span class="pre">modypy.model.ports.</span></span><span class="sig-name descname"><span class="pre">signal_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/modypy/model/ports.html#signal_method"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.model.ports.signal_method" title="Permalink to this definition"></a></dt>
+<dd><p>Transform a method into a <code class="docutils literal notranslate"><span class="pre">Signal</span></code></p>
+<p>The return value is a descriptor object that creates a <code class="docutils literal notranslate"><span class="pre">Signal</span></code> instance
+for each instance of the containing class.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="events.html" class="btn btn-neutral float-left" title="modpy.model.events: Events" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="states.html" class="btn btn-neutral float-right" title="modpy.model.states: States and State-Signals" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

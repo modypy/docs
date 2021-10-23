@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modypy.blocks.rigid &mdash; MoDyPy v2.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> MoDyPy
+            <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide.html">User’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>modypy.blocks.rigid</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for modypy.blocks.rigid</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Blocks for stiff body dynamics</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy.linalg</span> <span class="k">as</span> <span class="nn">linalg</span>
+
+<span class="kn">from</span> <span class="nn">modypy.model</span> <span class="kn">import</span> <span class="n">Block</span><span class="p">,</span> <span class="n">Port</span><span class="p">,</span> <span class="n">Signal</span><span class="p">,</span> <span class="n">SignalState</span>
+
+
+<div class="viewcode-block" id="RigidBody6DOFFlatEarth"><a class="viewcode-back" href="../../../api/packages/blocks/rigid.html#modypy.blocks.rigid.RigidBody6DOFFlatEarth">[docs]</a><span class="k">class</span> <span class="nc">RigidBody6DOFFlatEarth</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A block representing the motion of a rigid body in 6 degrees of freedom</span>
+<span class="sd">    relative to a flat earth reference frame.</span>
+
+<span class="sd">    The flat earth reference frame assumes the x-axis pointing to the north,</span>
+<span class="sd">    the y-axis pointing to the east, and the z-axis pointing down.</span>
+
+<span class="sd">    The body reference frame assumes the x-axis pointing to the front, the</span>
+<span class="sd">    y-axis pointing to the right, and the z-axis pointing down.</span>
+
+<span class="sd">    Both reference frames are right-handed systems.</span>
+
+<span class="sd">    The block assumes a constant mass and constant moment of inertia.</span>
+
+<span class="sd">    The block accepts the applied forces and moments in the body reference</span>
+<span class="sd">    frame as input, in this order.</span>
+
+<span class="sd">    It provides as output (in this order)</span>
+<span class="sd">        - the velocity in the earth reference frame,</span>
+<span class="sd">        - the position in the earth reference frame,</span>
+<span class="sd">        - the coordinate transformation matrix from the body to the earth</span>
+<span class="sd">          reference frame,</span>
+<span class="sd">        - the velocity in the body reference frame, and</span>
+<span class="sd">        - the angular rates in the body reference frame.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">owner</span><span class="p">,</span>
+                 <span class="n">mass</span><span class="p">,</span>
+                 <span class="n">moment_of_inertia</span><span class="p">,</span>
+                 <span class="n">initial_velocity_earth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">initial_position_earth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">initial_transformation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">initial_angular_rates_earth</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">Block</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="n">mass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">moment_of_inertia</span> <span class="o">=</span> <span class="n">moment_of_inertia</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">forces_body</span> <span class="o">=</span> <span class="n">Port</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">moments_body</span> <span class="o">=</span> <span class="n">Port</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">initial_transformation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">initial_transformation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">velocity_earth</span> <span class="o">=</span> \
+            <span class="n">SignalState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                        <span class="n">shape</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                        <span class="n">derivative_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">velocity_earth_dot</span><span class="p">,</span>
+                        <span class="n">initial_condition</span><span class="o">=</span><span class="n">initial_velocity_earth</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">position_earth</span> <span class="o">=</span> \
+            <span class="n">SignalState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                        <span class="n">shape</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                        <span class="n">derivative_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">position_earth_dot</span><span class="p">,</span>
+                        <span class="n">initial_condition</span><span class="o">=</span><span class="n">initial_position_earth</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">omega_earth</span> <span class="o">=</span> \
+            <span class="n">SignalState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                        <span class="n">shape</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                        <span class="n">derivative_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">omega_earth_dot</span><span class="p">,</span>
+                        <span class="n">initial_condition</span><span class="o">=</span><span class="n">initial_angular_rates_earth</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcm</span> <span class="o">=</span> \
+            <span class="n">SignalState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                        <span class="n">derivative_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dcm_dot</span><span class="p">,</span>
+                        <span class="n">initial_condition</span><span class="o">=</span><span class="n">initial_transformation</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">velocity_body</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                    <span class="n">shape</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                                    <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">velocity_body_output</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">omega_body</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                 <span class="n">shape</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                                 <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">omega_body_output</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RigidBody6DOFFlatEarth.velocity_earth_dot"><a class="viewcode-back" href="../../../api/packages/blocks/rigid.html#modypy.blocks.rigid.RigidBody6DOFFlatEarth.velocity_earth_dot">[docs]</a>    <span class="k">def</span> <span class="nf">velocity_earth_dot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculates the acceleration in the earth reference frame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">forces_earth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dcm</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">forces_body</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">accel_earth</span> <span class="o">=</span> <span class="n">forces_earth</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span>
+        <span class="k">return</span> <span class="n">accel_earth</span></div>
+
+<div class="viewcode-block" id="RigidBody6DOFFlatEarth.position_earth_dot"><a class="viewcode-back" href="../../../api/packages/blocks/rigid.html#modypy.blocks.rigid.RigidBody6DOFFlatEarth.position_earth_dot">[docs]</a>    <span class="k">def</span> <span class="nf">position_earth_dot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculates the velocity in the earth reference frame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">velocity_earth</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RigidBody6DOFFlatEarth.omega_earth_dot"><a class="viewcode-back" href="../../../api/packages/blocks/rigid.html#modypy.blocks.rigid.RigidBody6DOFFlatEarth.omega_earth_dot">[docs]</a>    <span class="k">def</span> <span class="nf">omega_earth_dot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the angular acceleration in the earth reference frame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">moments_earth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dcm</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">moments_body</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">ang_accel_earth</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">moment_of_inertia</span><span class="p">,</span> <span class="n">moments_earth</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ang_accel_earth</span></div>
+
+<div class="viewcode-block" id="RigidBody6DOFFlatEarth.dcm_dot"><a class="viewcode-back" href="../../../api/packages/blocks/rigid.html#modypy.blocks.rigid.RigidBody6DOFFlatEarth.dcm_dot">[docs]</a>    <span class="k">def</span> <span class="nf">dcm_dot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the derivative of the direct cosine matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">omega_earth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">omega_earth</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">skew_sym_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">omega_earth</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">omega_earth</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span>
+            <span class="p">[</span><span class="n">omega_earth</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">omega_earth</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+            <span class="p">[</span><span class="o">-</span><span class="n">omega_earth</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">omega_earth</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="p">])</span>
+        <span class="k">return</span> <span class="n">skew_sym_matrix</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">dcm</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RigidBody6DOFFlatEarth.velocity_body_output"><a class="viewcode-back" href="../../../api/packages/blocks/rigid.html#modypy.blocks.rigid.RigidBody6DOFFlatEarth.velocity_body_output">[docs]</a>    <span class="k">def</span> <span class="nf">velocity_body_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the velocity in the body reference frame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dcm</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">velocity_earth</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RigidBody6DOFFlatEarth.omega_body_output"><a class="viewcode-back" href="../../../api/packages/blocks/rigid.html#modypy.blocks.rigid.RigidBody6DOFFlatEarth.omega_body_output">[docs]</a>    <span class="k">def</span> <span class="nf">omega_body_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the angular velocity in the body reference frame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dcm</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">omega_earth</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DirectCosineToEuler"><a class="viewcode-back" href="../../../api/packages/blocks/rigid.html#modypy.blocks.rigid.DirectCosineToEuler">[docs]</a><span class="k">class</span> <span class="nc">DirectCosineToEuler</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A block translating a direct cosine matrix to Euler angles.</span>
+
+<span class="sd">    This block has a 3x3 direct cosine matrix (DCM) as input and</span>
+<span class="sd">    provides the euler angles (psi, theta, phi, in radians) for yaw,</span>
+<span class="sd">    pitch and roll as output.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># yaw: psi</span>
+    <span class="c1"># pitch: theta</span>
+    <span class="c1"># roll: phi</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+        <span class="n">Block</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcm</span> <span class="o">=</span> <span class="n">Port</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yaw</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">calculate_yaw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pitch</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">calculate_pitch</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">roll</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">calculate_roll</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DirectCosineToEuler.calculate_yaw"><a class="viewcode-back" href="../../../api/packages/blocks/rigid.html#modypy.blocks.rigid.DirectCosineToEuler.calculate_yaw">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_yaw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the yaw angle for the given direct cosine matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dcm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dcm</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">dcm</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dcm</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="DirectCosineToEuler.calculate_pitch"><a class="viewcode-back" href="../../../api/packages/blocks/rigid.html#modypy.blocks.rigid.DirectCosineToEuler.calculate_pitch">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_pitch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the pitch angle for the given direct cosine matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dcm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dcm</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="o">-</span><span class="n">dcm</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dcm</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">dcm</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="DirectCosineToEuler.calculate_roll"><a class="viewcode-back" href="../../../api/packages/blocks/rigid.html#modypy.blocks.rigid.DirectCosineToEuler.calculate_roll">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_roll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the roll angle for the given direct cosine matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dcm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dcm</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">dcm</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">dcm</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modypy.steady_state &mdash; MoDyPy 2.0.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> MoDyPy
+            <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide.html">Programmer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>modypy.steady_state</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for modypy.steady_state</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Functions and classes for finding the steady state of a system.</span>
+
+<span class="sd">To determine a steady state, set up a :class:`SteadyStateConfiguration` object</span>
+<span class="sd">and pass it to :func:`find_steady_state`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">accumulate</span><span class="p">,</span> <span class="n">chain</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.optimize</span> <span class="k">as</span> <span class="nn">opt</span>
+
+<span class="kn">from</span> <span class="nn">modypy.model</span> <span class="kn">import</span> <span class="n">Evaluator</span><span class="p">,</span> <span class="n">Port</span><span class="p">,</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">modypy.model.evaluation</span> <span class="kn">import</span> <span class="n">StateProvider</span><span class="p">,</span> <span class="n">PortProvider</span><span class="p">,</span> <span class="n">DataProvider</span>
+
+
+<div class="viewcode-block" id="SteadyStateConfiguration"><a class="viewcode-back" href="../../api/packages/steady_state.html#modypy.steady_state.SteadyStateConfiguration">[docs]</a><span class="k">class</span> <span class="nc">SteadyStateConfiguration</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Represents the configuration for the steady state determination</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        system</span>
+<span class="sd">            The system for which a steady state analysis shall be carried out</span>
+<span class="sd">        time</span>
+<span class="sd">            The system time for which the steady state analysis shall be carried</span>
+<span class="sd">            out.</span>
+<span class="sd">        objective</span>
+<span class="sd">            An objective to minimize. This is either `None` (default), a</span>
+<span class="sd">            callable or a `Port`. If no objective is specified, any steady state</span>
+<span class="sd">            that satisfies the other constraints may be returned.</span>
+<span class="sd">        initial_condition</span>
+<span class="sd">            The initial estimate for the states. The default is the initial</span>
+<span class="sd">            condition of the system.</span>
+<span class="sd">        initial_input</span>
+<span class="sd">            The initial estimate for the inputs. The default is the initial</span>
+<span class="sd">            values specified for the inputs in the system.</span>
+<span class="sd">        input_bounds</span>
+<span class="sd">            An array of shape (n,2), where n is the number of inputs for the</span>
+<span class="sd">            system. Each entry ``input_bounds[k]`` is a tuple ``(lb, ub)``, with</span>
+<span class="sd">            ``lb`` giving the lower and ``ub`` giving the upper bound for the</span>
+<span class="sd">            respective input line. The initial value for all bounds is</span>
+<span class="sd">            ``(-np.inf, np.inf)``, representing an unconstrained input line.</span>
+<span class="sd">        state_bounds</span>
+<span class="sd">            An array of shape (n,2), where n is the number of states for the</span>
+<span class="sd">            system. The format is the same as for `input_bounds`.</span>
+<span class="sd">        signal_bounds</span>
+<span class="sd">            An array of shape (n,2), where n is the number of signals for the</span>
+<span class="sd">            system. The format is the same as for `input_bounds`.</span>
+<span class="sd">        steady_states</span>
+<span class="sd">            An array of shape (n,), where n is the number of states for the</span>
+<span class="sd">            system. The entry ``steady_states[k]`` is a boolean indicating</span>
+<span class="sd">            whether the state ``k`` shall be steady, i.e. whether its derivative</span>
+<span class="sd">            shall be zero. By default, all states are set to be steady.</span>
+<span class="sd">        solver_options</span>
+<span class="sd">            Dictionary with additional keyword options for the solver.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">system</span><span class="p">:</span> <span class="n">System</span><span class="p">,</span>
+                 <span class="n">time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                 <span class="n">objective</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">callable</span><span class="p">,</span> <span class="n">Port</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">system</span> <span class="o">=</span> <span class="n">system</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">objective</span>
+        <span class="c1"># Set up the initial state estimates</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_condition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">initial_condition</span>
+        <span class="c1"># Set up the initial input estimates</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">initial_input</span>
+        <span class="c1"># Set up the initial input bounds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_inputs</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                                    <span class="n">fill_value</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">))</span>
+        <span class="c1"># Set up the initial state bounds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                                    <span class="n">fill_value</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">))</span>
+        <span class="c1"># Set up the initial signal bounds</span>
+        <span class="c1"># We initialize these to NaN so that we can skip the calculation</span>
+        <span class="c1"># of unbounded signal values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signal_bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_signals</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                                     <span class="n">fill_value</span><span class="o">=</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span>
+        <span class="c1"># Flags indicating which states need to be steady</span>
+        <span class="c1"># (by default, all states are steady states)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">steady_states</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span>
+        <span class="c1"># Set up the dictionary for solver options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solver_options</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="find_steady_state"><a class="viewcode-back" href="../../api/packages/steady_state.html#modypy.steady_state.find_steady_state">[docs]</a><span class="k">def</span> <span class="nf">find_steady_state</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">SteadyStateConfiguration</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Run the steady-state determination</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: The configuration for the steady-state analysis</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An :class:`OptimizeResult &lt;scipy.optimize.OptimizeResult&gt;` object with</span>
+<span class="sd">        additional fields.</span>
+
+<span class="sd">        state: ndarray</span>
+<span class="sd">            The state part of the solution</span>
+<span class="sd">        inputs: ndarray</span>
+<span class="sd">            The input part of the solution</span>
+<span class="sd">        evaluator: modypy.model.evaluation.Evaluator</span>
+<span class="sd">            An :class:`Evaluator &lt;modypy.model.evaluation.Evaluator&gt;` object,</span>
+<span class="sd">            configured to evaluate the system at the determined steady-state</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Set up the initial estimate</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">config</span><span class="o">.</span><span class="n">initial_condition</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">initial_input</span><span class="p">))</span>
+    <span class="c1"># Set up the bounds</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">config</span><span class="o">.</span><span class="n">state_bounds</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">input_bounds</span><span class="p">))</span>
+
+    <span class="c1"># Set up the constraints</span>
+    <span class="n">constraints</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">signal_bounds</span><span class="p">))</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="c1"># Set up the signal constraint</span>
+        <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_SignalConstraint</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># We have an actual objective function, so we can use the steady-state</span>
+        <span class="c1"># constraint as actual constraint.</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">steady_states</span><span class="p">):</span>
+            <span class="c1"># Set up the state derivative constraint</span>
+            <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_StateDerivativeConstraint</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
+
+        <span class="c1"># Translate the objective function</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">Port</span><span class="p">):</span>
+            <span class="n">objective_function</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_port_objective_function</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">callable</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">objective</span><span class="p">):</span>
+            <span class="n">objective_function</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_general_objective_function</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The objective function must be either a Port or &quot;</span>
+                             <span class="s2">&quot;a callable&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">any</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">steady_states</span><span class="p">):</span>
+        <span class="c1"># No objective function was specified, but we can use the steady-state</span>
+        <span class="c1"># constraint function. The value of this function is intended to be</span>
+        <span class="c1"># zero, so the minimum value of its square is zero.</span>
+        <span class="n">steady_state_constraint</span> <span class="o">=</span> <span class="n">_StateDerivativeConstraint</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">objective_function</span> <span class="o">=</span> <span class="n">steady_state_constraint</span><span class="o">.</span><span class="n">evaluate_squared</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># We have neither an objective function to minimize nor do we have any</span>
+        <span class="c1"># state that is intended to be steady. We cannot use the signal</span>
+        <span class="c1"># constraints to minimize, as these may specify ranges instead of a</span>
+        <span class="c1"># target value. We cannot do anything about this.</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either an objective function or at least one steady &quot;</span>
+                         <span class="s2">&quot;state is required&quot;</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">fun</span><span class="o">=</span><span class="n">objective_function</span><span class="p">,</span>
+                          <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span>
+                          <span class="n">method</span><span class="o">=</span><span class="s2">&quot;trust-constr&quot;</span><span class="p">,</span>
+                          <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+                          <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+                          <span class="n">options</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">solver_options</span><span class="p">)</span>
+
+    <span class="n">result</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">[:</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">]</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">:]</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">evaluator</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                                 <span class="n">system</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                                 <span class="n">state</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                                 <span class="n">inputs</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<span class="k">class</span> <span class="nc">_StateDerivativeConstraint</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">NonlinearConstraint</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represents the steady-state constraints on the state derivatives&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">SteadyStateConfiguration</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="c1"># Steady-state constraints can be defined on the level of individual</span>
+        <span class="c1"># state components. To optimize evaluation, we only evaluate derivatives</span>
+        <span class="c1"># of those states that have at least one of their components</span>
+        <span class="c1"># constrained.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constrained_states</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">state</span> <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">states</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">steady_states</span><span class="p">[</span><span class="n">state</span><span class="o">.</span><span class="n">state_slice</span><span class="p">])]</span>
+
+        <span class="c1"># We will build a vector of the constrained derivatives, and for that</span>
+        <span class="c1"># we assign offsets for the states in that vector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_offsets</span> <span class="o">=</span> \
+            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">accumulate</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">size</span>
+                                    <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constrained_states</span><span class="p">))</span>
+
+        <span class="n">num_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_offsets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># Now we set up the bounds for each of these</span>
+        <span class="n">ub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+        <span class="n">ub</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">steady_states</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">lb</span> <span class="o">=</span> <span class="o">-</span><span class="n">ub</span>
+
+        <span class="n">opt</span><span class="o">.</span><span class="n">NonlinearConstraint</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                         <span class="n">fun</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">,</span>
+                                         <span class="n">lb</span><span class="o">=</span><span class="n">lb</span><span class="p">,</span>
+                                         <span class="n">ub</span><span class="o">=</span><span class="n">ub</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine the value of the derivatives of the vector of constrained</span>
+<span class="sd">        states&quot;&quot;&quot;</span>
+
+        <span class="n">state</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">]</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">:]</span>
+        <span class="n">evaluator</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                              <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                              <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+                              <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="n">num_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_offsets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">derivative_vector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">num_states</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">state</span><span class="p">,</span> <span class="n">state_offset</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constrained_states</span><span class="p">,</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">state_offsets</span><span class="p">):</span>
+            <span class="n">derivative_vector</span><span class="p">[</span><span class="n">state_offset</span><span class="p">:</span><span class="n">state_offset</span> <span class="o">+</span> <span class="n">state</span><span class="o">.</span><span class="n">size</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">evaluator</span><span class="o">.</span><span class="n">get_state_derivative</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">derivative_vector</span>
+
+    <span class="k">def</span> <span class="nf">evaluate_squared</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine the 2-norm of the derivatives vector of constrained</span>
+<span class="sd">        states&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>
+
+
+<span class="k">class</span> <span class="nc">_SignalConstraint</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">NonlinearConstraint</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represents the constraints on signals&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">SteadyStateConfiguration</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+
+        <span class="c1"># Signal constraints can be defined on individual signal components.</span>
+        <span class="c1"># To optimize evaluation, we only evaluate those signals that have at</span>
+        <span class="c1"># least one of their components constrained.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constrained_signals</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">signal</span> <span class="k">for</span> <span class="n">signal</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">signals</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">signal_bounds</span><span class="p">[</span><span class="n">signal</span><span class="o">.</span><span class="n">signal_slice</span><span class="p">]))</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+        <span class="p">]</span>
+
+        <span class="c1"># We will build a vector of the constrained signals, and for that</span>
+        <span class="c1"># we assign offsets for the signals in that vector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signal_offsets</span> <span class="o">=</span> \
+            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">accumulate</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">size</span>
+                                    <span class="k">for</span> <span class="n">signal</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constrained_signals</span><span class="p">))</span>
+
+        <span class="c1"># Now we set up the bounds for each of these</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">signal_range</span>
+                                <span class="k">for</span> <span class="n">signal</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constrained_signals</span><span class="p">))</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">signal_bounds</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+        <span class="c1"># Ensure that no nans are in the bounds</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">bounds</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                      <span class="n">posinf</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+                      <span class="n">neginf</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+                      <span class="n">nan</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+                      <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">bounds</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                      <span class="n">posinf</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+                      <span class="n">neginf</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+                      <span class="n">nan</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+                      <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">opt</span><span class="o">.</span><span class="n">NonlinearConstraint</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                         <span class="n">fun</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">,</span>
+                                         <span class="n">lb</span><span class="o">=</span><span class="n">bounds</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                                         <span class="n">ub</span><span class="o">=</span><span class="n">bounds</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the vector of constrained signals&quot;&quot;&quot;</span>
+
+        <span class="n">state</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">]</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">:]</span>
+        <span class="n">evaluator</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                              <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                              <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+                              <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="n">num_signals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_offsets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">signal_vector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">num_signals</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">signal</span><span class="p">,</span> <span class="n">signal_offset</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constrained_signals</span><span class="p">,</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">signal_offsets</span><span class="p">):</span>
+            <span class="n">signal_vector</span><span class="p">[</span><span class="n">signal_offset</span><span class="p">:</span><span class="n">signal_offset</span> <span class="o">+</span> <span class="n">signal</span><span class="o">.</span><span class="n">size</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">evaluator</span><span class="o">.</span><span class="n">get_port_value</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">signal_vector</span>
+
+
+<span class="k">def</span> <span class="nf">_port_objective_function</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">SteadyStateConfiguration</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Implementation of the objective function for ports</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: The configuration for the steady-state determination</span>
+<span class="sd">        x: The vector of the current values of states and input</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The current value of the objective port</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">]</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">:]</span>
+    <span class="n">evaluator</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                          <span class="n">system</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                          <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+                          <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">get_port_value</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">objective</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_general_objective_function</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">SteadyStateConfiguration</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Implementation of the general objective function</span>
+
+<span class="sd">    This calls the objective function with a `DataProvider` as single parameter.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: The configuration for the steady-state determination</span>
+<span class="sd">        x: The vector of the current values of states and input</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The current value of the objective function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">]</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">num_states</span><span class="p">:]</span>
+    <span class="n">evaluator</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                          <span class="n">system</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">system</span><span class="p">,</span>
+                          <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+                          <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
+    <span class="n">state_provider</span> <span class="o">=</span> <span class="n">StateProvider</span><span class="p">(</span><span class="n">evaluator</span><span class="p">)</span>
+    <span class="n">port_provider</span> <span class="o">=</span> <span class="n">PortProvider</span><span class="p">(</span><span class="n">evaluator</span><span class="p">)</span>
+    <span class="n">data_provider</span> <span class="o">=</span> <span class="n">DataProvider</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                                 <span class="n">states</span><span class="o">=</span><span class="n">state_provider</span><span class="p">,</span>
+                                 <span class="n">signals</span><span class="o">=</span><span class="n">port_provider</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">data_provider</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

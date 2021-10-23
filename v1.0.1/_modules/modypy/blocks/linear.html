@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modypy.blocks.linear &mdash; MoDyPy 1.0.1 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> MoDyPy
+            <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>modypy.blocks.linear</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for modypy.blocks.linear</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Blocks for linear, time-invariant systems&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">modypy.model</span> <span class="kn">import</span> <span class="n">Block</span><span class="p">,</span> <span class="n">Port</span><span class="p">,</span> <span class="n">State</span><span class="p">,</span> <span class="n">Signal</span>
+
+
+<div class="viewcode-block" id="LTISystem"><a class="viewcode-back" href="../../../api/packages/blocks/linear.html#modypy.blocks.linear.LTISystem">[docs]</a><span class="k">class</span> <span class="nc">LTISystem</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implementation of a linear, time-invariant block of the following format::</span>
+
+<span class="sd">      dx/dt = system_matrix * x +        input_matrix * u</span>
+<span class="sd">      y     = output_matrix * x + feed_through_matrix * u</span>
+
+<span class="sd">    The matrices ``system_matrix``, ``input_matrix``, ``output_matrix`` and</span>
+<span class="sd">    ``feed_through_matrix`` define the state and output behaviour of the block.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">parent</span><span class="p">,</span>
+                 <span class="n">system_matrix</span><span class="p">,</span>
+                 <span class="n">input_matrix</span><span class="p">,</span>
+                 <span class="n">output_matrix</span><span class="p">,</span>
+                 <span class="n">feed_through_matrix</span><span class="p">,</span>
+                 <span class="n">initial_condition</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">Block</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+
+        <span class="n">system_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">system_matrix</span><span class="p">)</span>
+        <span class="n">input_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">input_matrix</span><span class="p">)</span>
+        <span class="n">output_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">output_matrix</span><span class="p">)</span>
+        <span class="n">feed_through_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">feed_through_matrix</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">system_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">system_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The system matrix must be square&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">system_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">input_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;The height of the system matrix and the input matrix &quot;</span>
+                <span class="s2">&quot;must be the same&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">output_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">feed_through_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;The height of the output matrix and the &quot;</span>
+                <span class="s2">&quot;feed-through matrix feed_through_matrix must be the same&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">system_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">output_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;The width of the system matrix and the output matrix&quot;</span>
+                <span class="s2">&quot;must be the same&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">input_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">feed_through_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;The width of the output matrix and the feed-through &quot;</span>
+                <span class="s2">&quot;matrix must be the same&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">system_matrix</span> <span class="o">=</span> <span class="n">system_matrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_matrix</span> <span class="o">=</span> <span class="n">input_matrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_matrix</span> <span class="o">=</span> <span class="n">output_matrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feed_through_matrix</span> <span class="o">=</span> <span class="n">feed_through_matrix</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="n">Port</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                           <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                           <span class="n">derivative_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state_derivative</span><span class="p">,</span>
+                           <span class="n">initial_condition</span><span class="o">=</span><span class="n">initial_condition</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                             <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                             <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_function</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LTISystem.state_derivative"><a class="viewcode-back" href="../../../api/packages/blocks/linear.html#modypy.blocks.linear.LTISystem.state_derivative">[docs]</a>    <span class="k">def</span> <span class="nf">state_derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculates the state derivative for the system&quot;&quot;&quot;</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">]</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">system_matrix</span> <span class="o">@</span> <span class="n">state</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_matrix</span> <span class="o">@</span> <span class="n">inputs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="LTISystem.output_function"><a class="viewcode-back" href="../../../api/packages/blocks/linear.html#modypy.blocks.linear.LTISystem.output_function">[docs]</a>    <span class="k">def</span> <span class="nf">output_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculates the output for the system&quot;&quot;&quot;</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">]</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_matrix</span> <span class="o">@</span> <span class="n">state</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feed_through_matrix</span> <span class="o">@</span> <span class="n">inputs</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Gain"><a class="viewcode-back" href="../../../api/packages/blocks/linear.html#modypy.blocks.linear.Gain">[docs]</a><span class="k">class</span> <span class="nc">Gain</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A simple linear gain block.</span>
+
+<span class="sd">    Provides the input scaled by the constant gain as output.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="n">Block</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="n">Port</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                             <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                             <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_function</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Gain.output_function"><a class="viewcode-back" href="../../../api/packages/blocks/linear.html#modypy.blocks.linear.Gain.output_function">[docs]</a>    <span class="k">def</span> <span class="nf">output_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculates the output for the system&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">@</span> <span class="n">data</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">]</span></div></div>
+
+
+<div class="viewcode-block" id="Sum"><a class="viewcode-back" href="../../../api/packages/blocks/linear.html#modypy.blocks.linear.Sum">[docs]</a><span class="k">class</span> <span class="nc">Sum</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A linear weighted sum block.</span>
+
+<span class="sd">    This block may have a number of inputs which are interpreted as vectors of</span>
+<span class="sd">    common dimension. The output of the block is calculated as the weighted</span>
+<span class="sd">    sum of the inputs.</span>
+
+<span class="sd">    The ``channel_weights`` give the factors by which the individual channels are</span>
+<span class="sd">    weighted in the sum.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">parent</span><span class="p">,</span>
+                 <span class="n">channel_weights</span><span class="p">,</span>
+                 <span class="n">output_size</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">Block</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">channel_weights</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_size</span> <span class="o">=</span> <span class="n">output_size</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Port</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_size</span><span class="p">)</span>
+                       <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                             <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_size</span><span class="p">,</span>
+                             <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_function</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Sum.output_function"><a class="viewcode-back" href="../../../api/packages/blocks/linear.html#modypy.blocks.linear.Sum.output_function">[docs]</a>    <span class="k">def</span> <span class="nf">output_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculates the output for the system&quot;&quot;&quot;</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_size</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">port_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)):</span>
+            <span class="n">inputs</span><span class="p">[</span><span class="n">port_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="n">port_idx</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_weights</span> <span class="o">@</span> <span class="n">inputs</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

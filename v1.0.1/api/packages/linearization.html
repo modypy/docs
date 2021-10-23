@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Steady-State Determination and Linearization &mdash; MoDyPy 1.0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/modypy.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/logo.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="The Utilities Module" href="../utils.html" />
+    <link rel="prev" title="Simulation" href="simulation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> MoDyPy
+            <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../math.html">Mathematical Basics</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../model.html">The Model API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../blocks.html">The Blocks Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Steady-State Determination and Linearization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils.html">The Utilities Module</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MoDyPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../api.html">API Documentation</a> &raquo;</li>
+      <li>Steady-State Determination and Linearization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api/packages/linearization.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-modypy.linearization">
+<span id="steady-state-determination-and-linearization"></span><h1>Steady-State Determination and Linearization<a class="headerlink" href="#module-modypy.linearization" title="Permalink to this headline"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="modypy.linearization.find_steady_state">
+<span class="sig-prename descclassname"><span class="pre">modypy.linearization.</span></span><span class="sig-name descname"><span class="pre">find_steady_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lm'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/modypy/linearization.html#find_steady_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.linearization.find_steady_state" title="Permalink to this definition"></a></dt>
+<dd><p>Find the constrained steady state of a system.</p>
+<p>A system is said to be in a <em>steady state</em> if its state does not change over
+time. As there maybe multiple steady states, additional constraints may be
+required.</p>
+<p>These constraints are expressed by enforcing the value of specified signals
+to be zero. Inputs can be specified by using the <code class="docutils literal notranslate"><span class="pre">InputSignal</span></code> class.</p>
+<p>The search begins at the initial values of signals and states.</p>
+<p>Note that for time-dependent systems, <code class="docutils literal notranslate"><span class="pre">find_steady_state</span></code> can only identify
+the steady state at a specific time.</p>
+<p>This function uses <code class="docutils literal notranslate"><span class="pre">scipy.optimize.root</span></code> for finding the root of the
+constraint functions.</p>
+<p>If the search is successful, the values of all input signals in the system
+will be set to the respective input value identified for the steady state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system</strong> – The system to analyze.</p></li>
+<li><p><strong>time</strong> – The time at which to determine the steady state. Default: 0</p></li>
+<li><p><strong>method</strong> – The solver method to use. Refer to the documentation for
+<cite>scipy.optimize.root</cite> for more information on the available methods.</p></li>
+<li><p><strong>solver_options</strong> – The options to pass to the solver.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>sol, x0 -
+sol: An <cite>scipy.optimize.OptimizeResult</cite> object
+x0: The state vector at which the steady state occurs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modypy.linearization.system_jacobian">
+<span class="sig-prename descclassname"><span class="pre">modypy.linearization.</span></span><span class="sig-name descname"><span class="pre">system_jacobian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/modypy/linearization.html#system_jacobian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modypy.linearization.system_jacobian" title="Permalink to this definition"></a></dt>
+<dd><p>Numerically determine the jacobian of the system at the given state and
+input setting.</p>
+<p>The function uses polygonal interpolation of the given order on the
+components of the system derivative and output function, chosing
+interpolation points in distance <cite>step</cite> from the given state and input.</p>
+<p>This can be used in conjunction with <cite>find_steady_state</cite> to determine
+an LTI approximating the behaviour around the steady state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system</strong> – The system to be analysed</p></li>
+<li><p><strong>time</strong> – The time at which the system shall be considered</p></li>
+<li><p><strong>x_ref</strong> – The state vector for which the jacobian shall be determined</p></li>
+<li><p><strong>u_ref</strong> – The input vector for which the jacobian shall be determined</p></li>
+<li><p><strong>step</strong> – The step size for numerical differentiation</p></li>
+<li><p><strong>order</strong> – The order of the interpolating polynomial</p></li>
+<li><p><strong>single_matrix</strong> – Flag indicating whether a single matrix shall be
+returned. The default is <cite>False</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The jacobian, if <code class="docutils literal notranslate"><span class="pre">single_matrix</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">system_matrix</span></code>, <code class="docutils literal notranslate"><span class="pre">input_matrix</span></code>, <code class="docutils literal notranslate"><span class="pre">output_matrix</span></code>,
+<code class="docutils literal notranslate"><span class="pre">feed_through_matrix</span></code>, representing the LTI system at the given state
+and input.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="simulation.html" class="btn btn-neutral float-left" title="Simulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../utils.html" class="btn btn-neutral float-right" title="The Utilities Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+
+    <p>&#169; Copyright 2021, Ralf Gerlich.</p>
+
+<div id="modypy-footer">
+    <ul class="modypy-footer-menu">
+        <li><a href="https://docs.modypy.org/imprint.html">Imprint</a></li>
+        <li><a href="https://docs.modypy.org/privacy_policy.html">Privacy Policy</a></li>
+    </ul>
+</div>
+
+
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
