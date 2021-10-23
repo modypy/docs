@@ -1,0 +1,24 @@
+name: Upload to docs.modypy.org
+
+on:
+  push:
+    branches: [ master ]
+    
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Deploy the documentation to the server
+        uses: SamKirkland/FTP-Deploy-Action@4.1.0
+        with:
+          protocol: ftps
+          server: ${{ secrets.docs_server }}
+          username: ${{ secrets.docs_username }}
+          password: ${{ secrets.docs_password }}
+          local-dir: .
+          server-dir: ${{ secrets.docs_target_dir }}
+          security: strict
+          exclude:
+            - **/.git*/**
