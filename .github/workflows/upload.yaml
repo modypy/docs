@@ -17,7 +17,7 @@ jobs:
           server: ${{ secrets.docs_server }}
           username: ${{ secrets.docs_username }}
           password: ${{ secrets.docs_password }}
-          local-dir: .
+          local-dir: ./
           server-dir: ${{ secrets.docs_target_dir }}
           security: strict
           exclude: "[**/.git*, **/.git*/**]"
